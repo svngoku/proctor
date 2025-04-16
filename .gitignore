@@ -129,4 +129,9 @@ dmypy.json
 cython_debug/
 
 # VSCode
-.vscode/ 
+.vscode/
+
+# Project specific ignores
+.specstory/
+docs/ 
+.cursorindexingignore

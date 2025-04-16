@@ -47,18 +47,18 @@ The library is based on the hierarchical structure of prompting techniques outli
     *   **For usage:**
         ```bash
         # Install from PyPI (once published)
-        # pip install proctor 
+        # uv pip install proctor 
         
         # Or install directly from GitHub (replace with your repo URL)
-        # pip install git+https://github.com/svngoku/proctor.git # Updated repo URL
+        # uv pip install git+https://github.com/svngoku/proctor.git
         ```
     *   **For development (from the cloned repo root):
         ```bash
-        # Use pip
-        pip install -e ./proctor
+        # Use uv
+        uv pip install -e .
         
-        # Or use uv
-        # uv pip install -e ./proctor
+        # Or use pip
+        # pip install -e .
         ```
         This installs the package in editable mode.
 
@@ -165,10 +165,10 @@ Set the logging level via environment variable if needed (e.g., `LOG_LEVEL=DEBUG
 
 1.  Clone the repository.
 2.  Set up a virtual environment (see Installation).
-3.  Install in editable mode: `pip install -e ./proctor` (or `uv pip install -e ./proctor`).
+3.  Install in editable mode: `uv pip install -e .`.
 4.  Install development dependencies (if any are added later, e.g., for testing):
     ```bash
-    # Example: pip install -e ".[dev]"
+    # Example: uv pip install -e ".[dev]"
     ```
 
 ### Running Tests (Placeholder)
