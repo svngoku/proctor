@@ -1,5 +1,9 @@
 # Proctor: A Python Library for Prompt Engineering Techniques
 
+<p align="center">
+  <img src="assets/proctor.png" alt="Proctor Logo" width="200"/>
+</p>
+
 [![PyPI version](https://badge.fury.io/py/proctor.svg)](https://badge.fury.io/py/proctor) <!-- Placeholder: Replace once published -->
 [![CI](https://github.com/svngoku/proctor/actions/workflows/python-package.yml/badge.svg)](https://github.com/svngoku/proctor/actions/workflows/python-package.yml) <!-- Updated username/repo -->
 
