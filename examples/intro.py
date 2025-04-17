@@ -17,12 +17,8 @@ expert_cot = CompositeTechnique(
     ]
 )
 
-problem = "How to build a EKS cluster in AWS?"
-
-# Generate the combined prompt
-# prompt = expert_cot.generate_prompt(problem, role="experienced travel planner")
-# print(prompt)
+problem = "What is the most impactful fact about the moon?"
 
 
-response = expert_cot.execute(problem, role="DevOps Engineer", verbose=True)
+response = expert_cot.execute(problem, role="Expert Moon Facts Researcher", verbose=True)
 response
