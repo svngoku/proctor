@@ -98,6 +98,9 @@ class TestUtils(unittest.TestCase):
     @patch('proctor.utils.time.sleep')  # Mock sleep to avoid delays in tests
     def test_call_llm_retry_success(self, mock_sleep, mock_get_config, mock_completion):
         """Test LLM call with retry that eventually succeeds."""
+        # Import here to avoid circular imports
+        import litellm.exceptions
+        
         # Mock configuration
         mock_get_config.return_value = {
             "model": "test-model",
@@ -105,18 +108,21 @@ class TestUtils(unittest.TestCase):
             "api_key": "test-key",
         }
         
-        # Mock responses - first fails, second succeeds
-        mock_completion.side_effect = [
-            MagicMock(side_effect=Exception("Rate limit exceeded")),  # First call fails
-            MagicMock()  # Second call succeeds
-        ]
+        # Set up a custom rate limit error for the first call
+        rate_limit_error = litellm.exceptions.RateLimitError(
+            message="Rate limit exceeded",
+            llm_provider="test-provider",
+            model="test-model"
+        )
         
         # Set up successful response for second call
         success_response = MagicMock()
         success_response.choices = [MagicMock()]
         success_response.choices[0].message.content = "Success after retry"
+        
+        # Set side effect for mock_completion
         mock_completion.side_effect = [
-            Exception("Rate limit exceeded"),  # First call fails
+            rate_limit_error,  # First call fails with rate limit error
             success_response  # Second call succeeds
         ]
         
@@ -145,7 +151,12 @@ class TestUtils(unittest.TestCase):
         
         # Create a custom error that's in the retryable exceptions list
         error_msg = "Service unavailable"
-        retryable_error = litellm.exceptions.ServiceUnavailableError(error_msg)
+        # The ServiceUnavailableError constructor requires additional arguments in newer versions
+        retryable_error = litellm.exceptions.ServiceUnavailableError(
+            message=error_msg,
+            llm_provider="test-provider",
+            model="test-model"
+        )
         mock_completion.side_effect = retryable_error
         
         # Call function with max_retries=2
