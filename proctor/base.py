@@ -3,7 +3,7 @@ Base classes for prompt techniques.
 """
 from typing import Any, Dict, Optional, List, Union
 from abc import ABC, abstractmethod
-from .utils import dedent_prompt, call_llm, log
+from .utils import dedent_prompt, call_llm, log, LLMError
 
 class PromptTechnique(ABC):
     """
@@ -47,6 +47,7 @@ class PromptTechnique(ABC):
         input_text: str, 
         system_prompt: Optional[str] = None,
         llm_config: Optional[Dict[str, Any]] = None,
+        max_retries: int = 2,
         **kwargs
     ) -> str:
         """
@@ -56,10 +57,15 @@ class PromptTechnique(ABC):
             input_text (str): The input text
             system_prompt (Optional[str]): Optional system prompt
             llm_config (Optional[Dict[str, Any]]): LLM configuration overrides
+            max_retries (int): Maximum number of retry attempts for LLM calls
             **kwargs: Additional arguments for prompt generation
             
         Returns:
             str: The LLM response
+            
+        Raises:
+            ValueError: If input validation fails
+            LLMError: If there are persistent issues with the LLM call
         """
         log.info(f"Executing technique: [bold magenta]{self.name}[/] ({self.identifier})")
         log.info(f"Input Text: [cyan]'{input_text}'[/]")
@@ -70,13 +76,24 @@ class PromptTechnique(ABC):
         if kwargs:
             log.info(f"Additional Args: {kwargs}")
             
+        # Generate prompt (may raise ValueError)
         prompt = self.generate_prompt(input_text, **kwargs)
         log.info(f"Generated Prompt:\n[blue]--- START ---\n{prompt}\n--- END ---[/]")
         
-        response = call_llm(prompt, system_prompt, llm_config)
-        log.info(f"LLM Response:\n[green]--- START ---\n{response}\n--- END ---[/]")
-        
-        return response
+        try:
+            # Call LLM with retry handling
+            response = call_llm(prompt, system_prompt, llm_config, max_retries)
+            log.info(f"LLM Response:\n[green]--- START ---\n{response}\n--- END ---[/]")
+            return response
+            
+        except LLMError as e:
+            log.error(f"[bold red]LLM Error: {str(e)}[/]")
+            # Re-raise the exception for higher-level handling
+            raise
+            
+        except Exception as e:
+            log.exception(f"Unexpected error during execution: {e}")
+            raise RuntimeError(f"Unexpected error during execution: {str(e)}")
     
     def __str__(self) -> str:
         return f"{self.name} ({self.identifier})"

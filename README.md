@@ -26,6 +26,9 @@ The library is based on the hierarchical structure of prompting techniques outli
 *   **Configuration:** Easily configure API keys and models via environment variables or a `.env` file.
 *   **Utilities:** Includes helper functions like `dedent_prompt`.
 *   **Logging:** Integrated logging using `rich` for clear, colorized console output showing inputs, prompts, and responses.
+*   **Advanced KNN:** Optional implementation of KNN technique with proper text embeddings and semantic similarity (requires additional dependencies).
+*   **Error Handling:** Robust error handling with automatic retries for transient API errors.
+*   **Performance Optimization:** Caching mechanisms for technique instances and embeddings to improve performance.
 
 ## Installation
 
@@ -56,15 +59,24 @@ The library is based on the hierarchical structure of prompting techniques outli
         # Or install directly from GitHub (replace with your repo URL)
         # uv pip install git+https://github.com/svngoku/proctor.git
         ```
-    *   **For development (from the cloned repo root):
+    *   **For development (from the cloned repo root):**
         ```bash
-        # Use uv
+        # Use uv for basic installation
         uv pip install -e .
         
+        # With advanced KNN features
+        uv pip install -e ".[knn]"
+        
+        # With development tools (pytest, ruff, etc.)
+        uv pip install -e ".[dev]"
+        
+        # With all features and tools
+        uv pip install -e ".[all]"
+        
         # Or use pip
-        # pip install -e .
+        # pip install -e ".[all]"
         ```
-        This installs the package in editable mode.
+        This installs the package in editable mode with your chosen optional dependencies.
 
 ## Configuration
 

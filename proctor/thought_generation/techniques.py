@@ -27,7 +27,11 @@ class ChainOfThought(PromptTechnique):
 
         Args:
             input_text (str): The problem or question to be solved.
-            **kwargs: Additional arguments (e.g., custom instructions).
+            **kwargs: Additional arguments:
+                - custom_instructions (str): Custom instruction text
+                - approach (str): Optional reasoning approach (e.g., "analytical", "mathematical")
+                - detail_level (str): Optional level of detail ("brief", "standard", "detailed")
+                - include_alternatives (bool): Whether to explore alternative approaches
 
         Returns:
             str: Formatted Chain-of-Thought prompt.
@@ -38,17 +42,43 @@ class ChainOfThought(PromptTechnique):
         if not input_text or not isinstance(input_text, str):
             raise ValueError("input_text must be a non-empty string")
         
-        # Generate numbered steps dynamically based on num_steps
-        steps = "\n".join(f"{i+1}. " for i in range(self.num_steps))
-        custom_instructions = kwargs.get("custom_instructions", "Let's work through this step-by-step:")
+        approach = kwargs.get("approach", "")
+        detail_level = kwargs.get("detail_level", "standard")
+        include_alternatives = kwargs.get("include_alternatives", False)
+        
+        # Customize guidance based on parameters
+        approach_text = f" using a {approach} approach" if approach else ""
+        
+        detail_guidance = {
+            "brief": "Focus on key insights with minimal explanation.",
+            "standard": "Provide balanced reasoning with moderate detail.",
+            "detailed": "Explore nuances and provide comprehensive explanation."
+        }.get(detail_level, "Provide balanced reasoning with moderate detail.")
+        
+        alternatives_text = "\n\nConsider at least one alternative approach or perspective before reaching your final conclusion." if include_alternatives else ""
+        
+        custom_instructions = kwargs.get(
+            "custom_instructions", 
+            f"Let's work through this{approach_text} step-by-step. {detail_guidance}{alternatives_text}"
+        )
+        
+        # Create a structured prompt with clearer guidance for each step
+        steps_text = ""
+        for i in range(self.num_steps):
+            step_num = i + 1
+            if step_num == 1:
+                steps_text += f"{step_num}. [Identify the key components of the problem]\n\n"
+            elif step_num == self.num_steps:
+                steps_text += f"{step_num}. [Derive the final result based on previous steps]\n\n"
+            else:
+                steps_text += f"{step_num}. [Apply logical reasoning to continue from previous steps]\n\n"
         
         prompt = dedent_prompt(f"""
-        {input_text}
+        Problem/Question: {input_text}
 
         {custom_instructions}
-        {steps}
         
-        Therefore, the final answer is:
+        {steps_text}Therefore, the final answer is:
         """)
         return prompt
 
@@ -72,7 +102,11 @@ class ZeroShotCoT(PromptTechnique):
 
         Args:
             input_text (str): The problem or question to be solved.
-            **kwargs: Additional arguments (e.g., custom instructions).
+            **kwargs: Additional arguments:
+                - custom_instructions (str): Custom instruction text
+                - domain (str): Optional domain for contextualizing the reasoning
+                - reasoning_style (str): Optional reasoning style ("analytical", "creative", etc.)
+                - complexity (str): Optional complexity level ("simple", "intermediate", "advanced")
 
         Returns:
             str: Formatted Zero-Shot CoT prompt.
@@ -83,12 +117,35 @@ class ZeroShotCoT(PromptTechnique):
         if not input_text or not isinstance(input_text, str):
             raise ValueError("input_text must be a non-empty string")
         
-        custom_instructions = kwargs.get("custom_instructions", "Let's think step by step to solve this:")
+        domain = kwargs.get("domain", "")
+        reasoning_style = kwargs.get("reasoning_style", "")
+        complexity = kwargs.get("complexity", "")
+        
+        domain_context = f" in the domain of {domain}" if domain else ""
+        style_context = f" using {reasoning_style} reasoning" if reasoning_style else ""
+        complexity_guidance = {
+            "simple": "Break this down into basic steps, focusing on the core concepts.",
+            "intermediate": "Analyze this methodically, considering important factors and relationships.",
+            "advanced": "Examine this comprehensively, addressing nuances and exploring deeper implications."
+        }.get(complexity, "")
+        
+        complexity_text = f" {complexity_guidance}" if complexity else ""
+        
+        custom_instruction_base = f"Let's think step by step{domain_context}{style_context} to solve this problem:{complexity_text}"
+        custom_instructions = kwargs.get("custom_instructions", custom_instruction_base)
         
         prompt = dedent_prompt(f"""
-        {input_text}
+        Problem/Question: {input_text}
 
         {custom_instructions}
+
+        1. [First, I'll identify what the problem is asking and key information provided]
+        
+        2. [Next, I'll determine an approach to solve this systematically]
+        
+        3. [I'll work through each logical step of my solution]
+        
+        4. [Finally, I'll verify my solution and formulate my answer]
         """)
         return prompt
 
@@ -132,7 +189,7 @@ class FewShotCoT(PromptTechnique):
         **kwargs
     ) -> str:
         """
-        Generate a Few-Sh部分
+        Generate a Few-Shot Chain-of-Thought prompt with examples of reasoning.
 
         Args:
             input_text (str): The problem or question to be solved.
@@ -172,16 +229,34 @@ class FewShotCoT(PromptTechnique):
             for example in examples
         ])
         
-        custom_instructions = kwargs.get("custom_instructions", "Use the same step-by-step reasoning approach as shown in the examples to solve the following problem:")
+        domain = kwargs.get("domain", "")
+        focus_areas = kwargs.get("focus_areas", [])
+        
+        domain_text = f" in {domain}" if domain else ""
+        focus_text = ""
+        if focus_areas:
+            focus_text = "\n- Pay special attention to: " + ", ".join(focus_areas)
+        
+        custom_instructions = kwargs.get(
+            "custom_instructions",
+            f"Use the same step-by-step reasoning approach as shown in the examples to solve the following problem{domain_text}:"
+        )
         
         prompt = dedent_prompt(f"""
-        Below are examples of solving problems with step-by-step reasoning:
+        Below are examples of problems solved using effective step-by-step reasoning. Study these patterns carefully:
 
         {examples_text}
 
         {custom_instructions}
+        {focus_text}
 
         Problem: {input_text}
+
+        I'll solve this by following a similar reasoning process:
+        1. First, I'll understand what the problem is asking
+        2. Then, I'll identify the key information and constraints
+        3. Next, I'll apply a systematic approach similar to the examples
+        4. Finally, I'll derive the answer through careful reasoning
 
         Reasoning:
         """)

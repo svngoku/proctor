@@ -6,14 +6,24 @@ build-backend = "setuptools.build_meta"
 name = "proctor"
 version = "0.1.0"
 authors = [
-  {name = "Your Name", email = "your.email@example.com"},
+  {name = "Svngoku", email = "svngokuofficiel@gmail.com"},
 ]
-description = "A comprehensive package for text-based prompting techniques based on protoc.md"
+description = "A comprehensive Python package for structured prompt engineering techniques"
 readme = "README.md"
 requires-python = ">=3.8"
+license = {text = "MIT"}
+keywords = ["prompt-engineering", "llm", "ai", "nlp", "gpt", "openai", "prompt-templates"]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Operating System :: OS Independent",
 ]
 dependencies = [
@@ -23,6 +33,28 @@ dependencies = [
     "rich>=13.0.0"
 ]
 
+[project.optional-dependencies]
+knn = [
+    "sentence-transformers>=2.0.0",
+    "scikit-learn>=1.0.0"
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.0.270",
+    "build>=0.10.0"
+]
+all = [
+    "sentence-transformers>=2.0.0",
+    "scikit-learn>=1.0.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.0.270",
+    "build>=0.10.0"
+]
+
 [project.urls]
-"Homepage" = "https://github.com/yourusername/proctor"
-"Bug Tracker" = "https://github.com/yourusername/proctor/issues" 
+"Homepage" = "https://github.com/svngoku/proctor"
+"Bug Tracker" = "https://github.com/svngoku/proctor/issues"
+"Documentation" = "https://github.com/svngoku/proctor/blob/master/README.md"
+"Source Code" = "https://github.com/svngoku/proctor" 

@@ -59,7 +59,15 @@ class ExampleGeneration(PromptTechnique):
 class KNN(PromptTechnique):
     """
     KNN selects examples based on k-nearest neighbors.
-    (Simplified implementation using random sampling)
+    
+    NOTE: This is currently a simplified implementation using random sampling.
+    A full implementation would use text embeddings and semantic similarity.
+    
+    Future enhancements planned:
+    1. Integrate with sentence-transformers for text embeddings
+    2. Implement proper distance/similarity metrics (e.g., cosine similarity)
+    3. Add caching for embeddings to improve performance
+    4. Support different embedding models
     """
     
     def __init__(self):
@@ -67,7 +75,7 @@ class KNN(PromptTechnique):
         super().__init__(
             name="KNN",
             identifier="2.2.1.2",
-            description="Selects examples using k-nearest neighbors approach (simplified)."
+            description="Selects examples using k-nearest neighbors approach (currently simplified)."
         )
     
     def generate_prompt(
@@ -80,30 +88,45 @@ class KNN(PromptTechnique):
         """
         Generate a few-shot prompt with KNN-selected examples.
         
+        IMPORTANT: The current implementation uses random sampling instead of true KNN.
+        For production use cases requiring accurate similarity matching, consider
+        using a different technique or wait for future updates to this class.
+        
         Args:
             input_text (str): Input text
             examples_pool (Optional[List[Dict[str, str]]]): Pool of available examples.
-                                                         Defaults to empty list if None.
+                Each example should have 'input' and 'output' keys.
+                Defaults to empty list if None.
             k (int): Number of nearest neighbors to select (default: 3)
             **kwargs: Additional arguments
             
         Returns:
             str: Generated prompt with KNN-selected examples
         """
-        # In a real implementation, we'd compute embeddings and find nearest neighbors
-        # For this simplified version, we'll just select k random examples
+        # SIMPLIFICATION WARNING: This is not a true KNN implementation
+        # In a proper implementation, we would:
+        # 1. Compute embeddings for input_text and all examples in examples_pool
+        # 2. Calculate semantic similarity (cosine similarity) between input and examples
+        # 3. Select the k examples with highest similarity scores
+        
         if examples_pool is None:
             examples_pool = [] # Initialize to empty list if None
             
         selected_examples = []
         if examples_pool:
+            # For now, just randomly sample k examples from the pool
             selected_examples = random.sample(examples_pool, min(k, len(examples_pool)))
         
-        examples_text = "\n\n".join([
-            f"Input: {example['input']}\nOutput: {example['output']}"
-            for example in selected_examples
-        ]) if selected_examples else "[No similar examples found]"
+        # Format the selected examples
+        if selected_examples:
+            examples_text = "\n\n".join([
+                f"Input: {example['input']}\nOutput: {example['output']}"
+                for example in selected_examples
+            ])
+        else:
+            examples_text = "[No similar examples found]"
         
+        # Generate the prompt with the selected examples
         prompt = dedent_prompt(f"""
         Here are some examples that seem most relevant to your query:
 

@@ -24,32 +24,63 @@ class DECOMP(PromptTechnique):
         
         Args:
             input_text (str): Input text (the complex problem)
-            **kwargs: Additional arguments
+            **kwargs: Additional arguments:
+                - num_subproblems (int): Number of subproblems to identify (default: 3)
+                - approach (str): Decomposition approach ("sequential", "parallel", "hierarchical")
+                - domain (str): Optional specific domain context
+                - clear_dependencies (bool): Whether to explicitly track dependencies between subproblems
             
         Returns:
             str: Generated DECOMP prompt
         """
+        num_subproblems = kwargs.get("num_subproblems", 3)
+        approach = kwargs.get("approach", "sequential")
+        domain = kwargs.get("domain", "")
+        clear_dependencies = kwargs.get("clear_dependencies", False)
+        
+        domain_context = f" in the {domain} domain" if domain else ""
+        
+        approach_guidance = {
+            "sequential": "Break the problem down into sequential steps, where each subproblem builds on the previous one.",
+            "parallel": "Identify independent aspects of the problem that can be solved separately and then combined.",
+            "hierarchical": "Break the problem into major components, then further decompose each component as needed."
+        }.get(approach, "Break the problem down into manageable parts that are easier to solve individually.")
+        
+        dependencies_text = "\n- Explicitly note how each subproblem depends on or relates to others" if clear_dependencies else ""
+        
+        # Generate subproblems dynamically
+        subproblems = ""
+        for i in range(num_subproblems):
+            subproblems += f"""
+        Subproblem {i+1}: [Identify and precisely describe a clear, specific aspect of the main problem]
+        - Why this subproblem is important: [Explain why solving this contributes to the overall solution]
+        - Key information needed: [Identify what data/concepts are needed to solve this part]
+        
+        Solution to Subproblem {i+1}:
+        [Solve this subproblem with clear, systematic reasoning]
+        
+        """
+        
         prompt = dedent_prompt(f"""
-        Complex Problem: {input_text}
+        # Complex Problem Analysis{domain_context}:
         
-        Let's break this down into simpler, manageable subproblems:
+        Problem Statement: {input_text}
         
-        Subproblem 1: [Identify and describe the first subproblem]
-        Solution to Subproblem 1:
-        [Solve the first subproblem]
+        ## Decomposition Strategy:
+        {approach_guidance}{dependencies_text}
         
-        Subproblem 2: [Identify and describe the second subproblem, possibly depending on the first]
-        Solution to Subproblem 2:
-        [Solve the second subproblem]
+        ## Breaking Down the Problem:
+        {subproblems}
+        ## Integration and Synthesis:
+        [Explain how the solutions to subproblems connect and build toward the complete solution]
+        [Identify any important insights that emerge from combining the partial solutions]
+        [Address any remaining aspects not covered by the individual subproblems]
         
-        Subproblem 3: [Identify and describe the third subproblem... continue as needed]
-        Solution to Subproblem 3:
-        [Solve the third subproblem]
+        ## Final Comprehensive Solution:
+        [Provide the complete, integrated solution to the original problem]
         
-        Now, combine the solutions to the subproblems to address the original complex problem:
-        [Synthesis of subproblem solutions]
-        
-        Therefore, the final answer to the original complex problem is:
-        [Final answer]
+        ## Verification:
+        [Verify that the solution addresses all aspects of the original problem]
+        [Check for consistency and correctness across subproblem solutions]
         """)
         return prompt 

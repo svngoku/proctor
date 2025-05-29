@@ -6,6 +6,9 @@ from typing import List, Optional, Dict, Type # Added Type
 # Import base classes
 from .base import PromptTechnique, CompositeTechnique
 
+# Import utility classes and exceptions
+from .utils import LLMError
+
 # Import Zero-Shot techniques
 from .zero_shot.techniques import (
     EmotionPrompting,
@@ -70,6 +73,9 @@ ALL_TECHNIQUES: Dict[str, Type[PromptTechnique]] = {
     "decomp": DECOMP
 }
 
+# Cached technique instances
+_TECHNIQUE_INSTANCES: Dict[str, PromptTechnique] = {}
+
 def list_techniques(category: Optional[str] = None) -> List[str]:
     """
     List available prompting techniques, optionally filtered by category identifier prefix.
@@ -85,10 +91,18 @@ def list_techniques(category: Optional[str] = None) -> List[str]:
         return list(ALL_TECHNIQUES.keys())
     
     # Filter by checking if the technique's identifier starts with the category string
-    return [
-        name for name, technique_cls in ALL_TECHNIQUES.items()
-        if technique_cls().identifier.startswith(category) # Instantiate to get identifier
-    ]
+    filtered_techniques = []
+    
+    for name, technique_cls in ALL_TECHNIQUES.items():
+        # Get or create cached instance
+        if name not in _TECHNIQUE_INSTANCES:
+            _TECHNIQUE_INSTANCES[name] = technique_cls()
+            
+        # Check if identifier matches the category
+        if _TECHNIQUE_INSTANCES[name].identifier.startswith(category):
+            filtered_techniques.append(name)
+            
+    return filtered_techniques
 
 def get_technique(name: str) -> Optional[PromptTechnique]:
     """
@@ -99,16 +113,32 @@ def get_technique(name: str) -> Optional[PromptTechnique]:
         
     Returns:
         Optional[PromptTechnique]: An initialized instance of the technique, or None if not found.
+        
+    Note:
+        Instances are cached to improve performance when the same technique
+        is requested multiple times.
     """
+    # Check cache first
+    if name in _TECHNIQUE_INSTANCES:
+        return _TECHNIQUE_INSTANCES[name]
+        
+    # Create new instance if not in cache
     technique_cls = ALL_TECHNIQUES.get(name)
     if technique_cls:
-        return technique_cls() # Return an instance
+        # Initialize and cache the instance
+        instance = technique_cls()
+        _TECHNIQUE_INSTANCES[name] = instance
+        return instance
+        
     return None
 
 # Expose key components directly
 __all__ = [
+    # Base classes
     "PromptTechnique",
     "CompositeTechnique",
+    
+    # Techniques
     "EmotionPrompting",
     "RolePrompting",
     "SelfAsk",
@@ -120,8 +150,13 @@ __all__ = [
     "SelfConsistency",
     "ChainOfVerification",
     "DECOMP",
+    
+    # Utility functions and constants
     "list_techniques",
     "get_technique",
     "ALL_TECHNIQUES",
-    "__version__"
+    "__version__",
+    
+    # Exceptions
+    "LLMError"
 ] 
