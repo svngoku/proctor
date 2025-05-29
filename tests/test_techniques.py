@@ -19,7 +19,8 @@ from proctor import (
     KNN,
     ChainOfVerification,
     DECOMP,
-    SelfConsistency
+    SelfConsistency,
+    StylePrompting
 )
 
 
@@ -186,11 +187,42 @@ class TestTechniques(unittest.TestCase):
         self.assertIn("quantum mechanics", prompt)
         self.assertIn("Your target audience is university students", prompt)
     
+    def test_style_prompting(self):
+        """Test StylePrompting technique."""
+        technique = StylePrompting()
+        self.assertEqual(technique.name, "Style Prompting")
+        self.assertEqual(technique.identifier, "2.2.2.3")
+        
+        # Test prompt generation with default style
+        input_text = "Explain the concept of relativity."
+        prompt = technique.generate_prompt(input_text)
+        
+        self.assertIn(input_text, prompt)
+        self.assertIn("professional style", prompt)
+        
+        # Test with custom style
+        prompt = technique.generate_prompt(input_text, style="casual")
+        self.assertIn("casual style", prompt)
+        
+        # Test with tone, format, and audience
+        prompt = technique.generate_prompt(
+            input_text, 
+            style="academic",
+            tone="formal",
+            format="essay",
+            audience="undergraduates"
+        )
+        
+        self.assertIn("academic style", prompt)
+        self.assertIn("with a formal tone", prompt)
+        self.assertIn("in essay format", prompt)
+        self.assertIn("for undergraduates", prompt)
+    
     def test_self_ask(self):
         """Test SelfAsk technique."""
         technique = SelfAsk()
         self.assertEqual(technique.name, "Self-Ask")
-        self.assertEqual(technique.identifier, "2.2.2.3")
+        self.assertEqual(technique.identifier, "2.2.2.8")
         
         # Test prompt generation with defaults
         input_text = "What causes ocean tides?"
