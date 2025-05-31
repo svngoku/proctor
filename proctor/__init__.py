@@ -86,7 +86,7 @@ from .decomposition.techniques import (
 )
 
 # Version
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 # Dictionary of all techniques for easy access (using class types)
 ALL_TECHNIQUES: Dict[str, Type[PromptTechnique]] = {
