@@ -1,6 +1,7 @@
 """
 Configuration for LLM services using litellm with openrouter.
 """
+
 import os
 from typing import Dict, Any
 
@@ -13,6 +14,7 @@ DEFAULT_LLM_CONFIG = {
     "temperature": 0.7,
 }
 
+
 def get_llm_config() -> Dict[str, Any]:
     """
     Get the LLM configuration with environment variables if available.
@@ -20,12 +22,12 @@ def get_llm_config() -> Dict[str, Any]:
         Dict[str, Any]: The LLM configuration
     """
     config = DEFAULT_LLM_CONFIG.copy()
-    
+
     # Override with environment variables if present
     if api_key := os.environ.get("OPENROUTER_API_KEY"):
         config["api_key"] = api_key
-    
+
     if model := os.environ.get("OPENROUTER_MODEL"):
         config["model"] = model
-        
-    return config 
+
+    return config

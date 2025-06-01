@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "proctor"
-version = "0.1.0"
+name = "proctor-ai"
+version = "0.1.1"
 authors = [
   {name = "Svngoku", email = "svngokuofficiel@gmail.com"},
 ]
@@ -27,10 +27,13 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    "build>=1.2.2.post1",
     "litellm>=1.0.0",
     "openai>=1.0.0",
     "python-dotenv>=0.20.0",
-    "rich>=13.0.0"
+    "rich>=13.0.0",
+    "twine>=6.1.0",
+    "aiohttp>=3.9.0",
 ]
 
 [project.optional-dependencies]

@@ -1,13 +1,13 @@
-# Proctor: A Python Library for Prompt Engineering Techniques
+# Proctor AI: A Python Library for Prompt Engineering Techniques
 
 <p align="center">
   <img src="assets/proctor.png" alt="Proctor Logo" width="200"/>
 </p>
 
-[![PyPI version](https://badge.fury.io/py/proctor.svg)](https://badge.fury.io/py/proctor) <!-- Placeholder: Replace once published -->
-[![CI](https://github.com/svngoku/proctor/actions/workflows/python-package.yml/badge.svg)](https://github.com/svngoku/proctor/actions/workflows/python-package.yml) <!-- Updated username/repo -->
+[![PyPI version](https://badge.fury.io/py/proctor-ai.svg)](https://badge.fury.io/py/proctor-ai)
+[![CI](https://github.com/svngoku/proctor/actions/workflows/python-package.yml/badge.svg)](https://github.com/svngoku/proctor/actions/workflows/python-package.yml)
 
-`proctor` is a comprehensive Python package designed to implement and explore a variety of text-based prompt engineering techniques. It provides a structured way to apply different prompting strategies to interact with Large Language Models (LLMs), using [LiteLLM](https://github.com/BerriAI/litellm) and [OpenRouter](https://openrouter.ai/) as the default backend.
+`proctor-ai` is a comprehensive Python package designed to implement and explore a variety of text-based prompt engineering techniques. It provides a structured way to apply different prompting strategies to interact with Large Language Models (LLMs), using [LiteLLM](https://github.com/BerriAI/litellm) and [OpenRouter](https://openrouter.ai/) as the default backend.
 
 The library is based on the hierarchical structure of prompting techniques outlined in the initial project documentation (`docs/protoc.md`).
 
@@ -53,11 +53,14 @@ The library is based on the hierarchical structure of prompting techniques outli
 3.  **Install the package:**
     *   **For usage:**
         ```bash
-        # Install from PyPI (once published)
-        # uv pip install proctor 
+        # Install from PyPI
+        pip install proctor-ai
         
-        # Or install directly from GitHub (replace with your repo URL)
-        # uv pip install git+https://github.com/svngoku/proctor.git
+        # Or using uv
+        uv pip install proctor-ai
+        
+        # Or install directly from GitHub
+        pip install git+https://github.com/svngoku/proctor.git
         ```
     *   **For development (from the cloned repo root):**
         ```bash
@@ -74,7 +77,7 @@ The library is based on the hierarchical structure of prompting techniques outli
         uv pip install -e ".[all]"
         
         # Or use pip
-        # pip install -e ".[all]"
+        pip install -e ".[all]"
         ```
         This installs the package in editable mode with your chosen optional dependencies.
 
@@ -177,33 +180,166 @@ The library uses Python's `logging` module configured with `rich` to provide col
 
 Set the logging level via environment variable if needed (e.g., `LOG_LEVEL=DEBUG`).
 
+## Quick Start
+
+After installation, here's a simple example to get started:
+
+```python
+# Install the package
+# pip install proctor-ai
+
+import os
+from dotenv import load_dotenv
+from proctor import ZeroShotCoT
+
+# Load your API key
+load_dotenv()
+
+# Create a technique instance
+cot = ZeroShotCoT()
+
+# Use it with any problem
+problem = "What are the benefits of renewable energy?"
+response = cot.execute(problem)
+print(response)
+```
+
 ## Development
 
 1.  Clone the repository.
 2.  Set up a virtual environment (see Installation).
-3.  Install in editable mode: `uv pip install -e .`.
-4.  Install development dependencies (if any are added later, e.g., for testing):
-    ```bash
-    # Example: uv pip install -e ".[dev]"
-    ```
+3.  Install in development mode: `make install-dev` or `uv pip install -e ".[dev,all]"`.
 
-### Running Tests (Placeholder)
+### Using the Makefile
+
+The project includes a comprehensive Makefile for development tasks:
 
 ```bash
-# pytest
+# Install dependencies
+make install-dev
+
+# Run linting and formatting
+make lint
+
+# Run tests
+make test
+
+# Run core tests (excluding optional features)
+make test-core
+
+# Run tests with coverage
+make test-cov
+
+# Check code style without fixing
+make check
+
+# Clean build artifacts
+make clean
+
+# Build package
+make build
+
+# Deploy to Test PyPI
+make deploy-test-permissive
+
+# Deploy to Production PyPI
+make deploy-prod-permissive
+
+# See all available commands
+make help
 ```
 
-### Linting (Placeholder)
+### Manual Commands
+
+If you prefer running commands directly:
 
 ```bash
-# ruff check .
-# ruff format .
+# Running Tests
+pytest tests/ -v
+
+# Linting
+ruff check proctor/ tests/ examples/
+ruff format proctor/ tests/ examples/
+
+# Building
+python -m build
+```
+
+## Deployment
+
+The project uses automated CI/CD via GitHub Actions:
+
+- **Pull Requests**: Run tests and linting
+- **Push to main/master**: Deploy to Test PyPI automatically
+- **Tagged releases**: Deploy to Production PyPI automatically
+
+### Creating a Release
+
+1. Update the version in `pyproject.toml`:
+   ```bash
+   make version-bump-patch  # or version-bump-minor, version-bump-major
+   ```
+
+2. Commit and push the version change:
+   ```bash
+   git add pyproject.toml
+   git commit -m "Bump version to X.Y.Z"
+   git push
+   ```
+
+3. Create and push a tag:
+   ```bash
+   git tag v0.1.2  # Replace with your version
+   git push origin v0.1.2
+   ```
+
+4. GitHub Actions will automatically:
+   - Run tests
+   - Build the package
+   - Deploy to PyPI
+
+### Manual Deployment
+
+For manual deployment using the Makefile:
+
+```bash
+# Deploy to Test PyPI
+make deploy-test-permissive
+
+# Deploy to Production PyPI
+make deploy-prod-permissive
 ```
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request.
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run the tests (`make test-core`)
+5. Run the linter (`make lint`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+### Development Setup
+
+```bash
+# Clone the repo
+git clone https://github.com/svngoku/proctor.git
+cd proctor
+
+# Set up development environment
+make install-dev
+
+# Run tests to ensure everything works
+make test-core
+
+# See all available commands
+make help
+```
 
 ## License
 
-This project is licensed under the MIT License - see the `LICENSE` file for details (if one is added, or refer to `pyproject.toml`).
+This project is licensed under the MIT License - see the `LICENSE` file for details.

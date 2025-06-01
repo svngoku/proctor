@@ -1,28 +1,29 @@
 """
 Implementation of Decomposition prompting techniques.
 """
-from typing import List, Dict, Optional
+
 from ..base import PromptTechnique
 from ..utils import dedent_prompt
+
 
 class DECOMP(PromptTechnique):
     """
     DECOMP breaks down complex problems into simpler subproblems.
     (Note: Guides the LLM to perform decomposition)
     """
-    
+
     def __init__(self):
         """Initialize DECOMP technique."""
         super().__init__(
             name="DECOMP",
             identifier="2.2.4",
-            description="Breaks down complex problems into simpler subproblems."
+            description="Breaks down complex problems into simpler subproblems.",
         )
-    
+
     def generate_prompt(self, input_text: str, **kwargs) -> str:
         """
         Generate a DECOMP prompt.
-        
+
         Args:
             input_text (str): Input text (the complex problem)
             **kwargs: Additional arguments:
@@ -30,7 +31,7 @@ class DECOMP(PromptTechnique):
                 - approach (str): Decomposition approach ("sequential", "parallel", "hierarchical")
                 - domain (str): Optional specific domain context
                 - clear_dependencies (bool): Whether to explicitly track dependencies between subproblems
-            
+
         Returns:
             str: Generated DECOMP prompt
         """
@@ -38,30 +39,37 @@ class DECOMP(PromptTechnique):
         approach = kwargs.get("approach", "sequential")
         domain = kwargs.get("domain", "")
         clear_dependencies = kwargs.get("clear_dependencies", False)
-        
+
         domain_context = f" in the {domain} domain" if domain else ""
-        
+
         approach_guidance = {
             "sequential": "Break the problem down into sequential steps, where each subproblem builds on the previous one.",
             "parallel": "Identify independent aspects of the problem that can be solved separately and then combined.",
-            "hierarchical": "Break the problem into major components, then further decompose each component as needed."
-        }.get(approach, "Break the problem down into manageable parts that are easier to solve individually.")
-        
-        dependencies_text = "\n- Explicitly note how each subproblem depends on or relates to others" if clear_dependencies else ""
-        
+            "hierarchical": "Break the problem into major components, then further decompose each component as needed.",
+        }.get(
+            approach,
+            "Break the problem down into manageable parts that are easier to solve individually.",
+        )
+
+        dependencies_text = (
+            "\n- Explicitly note how each subproblem depends on or relates to others"
+            if clear_dependencies
+            else ""
+        )
+
         # Generate subproblems dynamically
         subproblems = ""
         for i in range(num_subproblems):
             subproblems += f"""
-        Subproblem {i+1}: [Identify and precisely describe a clear, specific aspect of the main problem]
+        Subproblem {i + 1}: [Identify and precisely describe a clear, specific aspect of the main problem]
         - Why this subproblem is important: [Explain why solving this contributes to the overall solution]
         - Key information needed: [Identify what data/concepts are needed to solve this part]
         
-        Solution to Subproblem {i+1}:
+        Solution to Subproblem {i + 1}:
         [Solve this subproblem with clear, systematic reasoning]
         
         """
-        
+
         prompt = dedent_prompt(f"""
         # Complex Problem Analysis{domain_context}:
         
@@ -90,43 +98,55 @@ class DECOMP(PromptTechnique):
 class FaithfulCoT(PromptTechnique):
     """
     Faithful CoT ensures reasoning steps are faithful to the problem requirements.
-    
+
     This technique emphasizes maintaining fidelity to the original problem
     throughout the reasoning process, avoiding drift or misinterpretation.
     """
-    
+
     def __init__(self):
         """Initialize Faithful CoT technique."""
         super().__init__(
             name="Faithful CoT",
             identifier="2.2.4",
-            description="Ensures reasoning steps remain faithful to problem requirements."
+            description="Ensures reasoning steps remain faithful to problem requirements.",
         )
-    
+
     def generate_prompt(self, input_text: str, **kwargs) -> str:
         """
         Generate a Faithful CoT prompt.
-        
+
         Args:
             input_text (str): Input text
             **kwargs: Additional arguments
                 - fidelity_checks (List[str]): Specific fidelity aspects to monitor
                 - constraint_tracking (bool): Whether to explicitly track constraints
-            
+
         Returns:
             str: Generated Faithful CoT prompt
         """
-        fidelity_checks = kwargs.get("fidelity_checks", ["problem_alignment", "constraint_adherence", "scope_maintenance"])
+        fidelity_checks = kwargs.get(
+            "fidelity_checks",
+            ["problem_alignment", "constraint_adherence", "scope_maintenance"],
+        )
         constraint_tracking = kwargs.get("constraint_tracking", True)
-        
-        checks_text = "\n".join([f"- {check.replace('_', ' ').title()}: [Monitor {check.replace('_', ' ')}]" for check in fidelity_checks])
-        
-        constraint_text = """
+
+        checks_text = "\n".join(
+            [
+                f"- {check.replace('_', ' ').title()}: [Monitor {check.replace('_', ' ')}]"
+                for check in fidelity_checks
+            ]
+        )
+
+        constraint_text = (
+            """
         
         Constraint Tracking:
         [Explicitly list and track all constraints throughout reasoning]
-        """ if constraint_tracking else ""
-        
+        """
+            if constraint_tracking
+            else ""
+        )
+
         prompt = dedent_prompt(f"""
         Problem: {input_text}
         
@@ -160,41 +180,41 @@ class FaithfulCoT(PromptTechnique):
 class LeastToMost(PromptTechnique):
     """
     Least-to-Most prompting solves problems by starting with simpler cases.
-    
+
     This technique begins with the simplest version of a problem and gradually
     builds up to more complex versions, using insights from simpler cases.
     """
-    
+
     def __init__(self):
         """Initialize Least-to-Most technique."""
         super().__init__(
             name="Least-to-Most",
             identifier="2.2.4",
-            description="Solves problems by starting with simpler cases and building up."
+            description="Solves problems by starting with simpler cases and building up.",
         )
-    
+
     def generate_prompt(self, input_text: str, **kwargs) -> str:
         """
         Generate a Least-to-Most prompt.
-        
+
         Args:
             input_text (str): Input text
             **kwargs: Additional arguments
                 - complexity_levels (int): Number of complexity levels to use
                 - progression_strategy (str): Strategy for complexity progression
-            
+
         Returns:
             str: Generated Least-to-Most prompt
         """
         complexity_levels = kwargs.get("complexity_levels", 3)
         progression_strategy = kwargs.get("progression_strategy", "gradual")
-        
+
         strategy_guidance = {
             "gradual": "Gradually increase complexity with small incremental steps",
             "exponential": "Increase complexity exponentially at each level",
-            "targeted": "Focus on specific aspects that increase complexity"
+            "targeted": "Focus on specific aspects that increase complexity",
         }.get(progression_strategy, "Gradually increase complexity")
-        
+
         levels_text = []
         for i in range(complexity_levels):
             level_num = i + 1
@@ -215,13 +235,13 @@ class LeastToMost(PromptTechnique):
             else:
                 levels_text.append(f"""
         Level {level_num} - Intermediate Case:
-        [Increase complexity from Level {level_num-1}]
+        [Increase complexity from Level {level_num - 1}]
         [Build upon previous insights while adding new elements]
         Solution {level_num}: [Intermediate solution]
         """)
-        
+
         levels_content = "\n".join(levels_text)
-        
+
         prompt = dedent_prompt(f"""
         Problem: {input_text}
         
@@ -245,47 +265,51 @@ class LeastToMost(PromptTechnique):
 class PlanAndSolve(PromptTechnique):
     """
     Plan-and-Solve separates planning from execution for systematic problem-solving.
-    
+
     This technique first creates a detailed plan for solving the problem,
     then systematically executes that plan step by step.
     """
-    
+
     def __init__(self):
         """Initialize Plan-and-Solve technique."""
         super().__init__(
             name="Plan-and-Solve",
             identifier="2.2.4",
-            description="Separates planning from execution for systematic problem-solving."
+            description="Separates planning from execution for systematic problem-solving.",
         )
-    
+
     def generate_prompt(self, input_text: str, **kwargs) -> str:
         """
         Generate a Plan-and-Solve prompt.
-        
+
         Args:
             input_text (str): Input text
             **kwargs: Additional arguments
                 - planning_depth (str): Depth of planning phase
                 - execution_monitoring (bool): Whether to monitor execution progress
-            
+
         Returns:
             str: Generated Plan-and-Solve prompt
         """
         planning_depth = kwargs.get("planning_depth", "detailed")
         execution_monitoring = kwargs.get("execution_monitoring", True)
-        
+
         depth_guidance = {
             "basic": "Create a high-level plan with major steps",
             "detailed": "Develop a comprehensive plan with specific sub-steps",
-            "exhaustive": "Create an exhaustive plan covering all possible contingencies"
+            "exhaustive": "Create an exhaustive plan covering all possible contingencies",
         }.get(planning_depth, "Develop a comprehensive plan")
-        
-        monitoring_text = """
+
+        monitoring_text = (
+            """
         
         Execution Monitoring:
         [After each step, assess progress and adjust plan if needed]
-        """ if execution_monitoring else ""
-        
+        """
+            if execution_monitoring
+            else ""
+        )
+
         prompt = dedent_prompt(f"""
         Problem: {input_text}
         
@@ -347,50 +371,54 @@ class PlanAndSolve(PromptTechnique):
 class ProgramOfThought(PromptTechnique):
     """
     Program-of-Thought expresses reasoning as executable programs or algorithms.
-    
+
     This technique structures reasoning in a program-like format with clear
     inputs, processes, and outputs, making reasoning more systematic and verifiable.
     """
-    
+
     def __init__(self):
         """Initialize Program-of-Thought technique."""
         super().__init__(
             name="Program-of-Thought",
             identifier="2.2.4",
-            description="Expresses reasoning as executable programs or algorithms."
+            description="Expresses reasoning as executable programs or algorithms.",
         )
-    
+
     def generate_prompt(self, input_text: str, **kwargs) -> str:
         """
         Generate a Program-of-Thought prompt.
-        
+
         Args:
             input_text (str): Input text
             **kwargs: Additional arguments
                 - programming_style (str): Style of program structure
                 - include_debugging (bool): Whether to include debugging steps
-            
+
         Returns:
             str: Generated Program-of-Thought prompt
         """
         programming_style = kwargs.get("programming_style", "procedural")
         include_debugging = kwargs.get("include_debugging", True)
-        
+
         style_guidance = {
             "procedural": "Structure as a sequence of procedures and functions",
             "object_oriented": "Structure using objects and methods",
             "functional": "Structure using functional programming principles",
-            "algorithmic": "Structure as a clear algorithm with defined steps"
+            "algorithmic": "Structure as a clear algorithm with defined steps",
         }.get(programming_style, "Structure as a systematic program")
-        
-        debugging_text = """
+
+        debugging_text = (
+            """
         
         DEBUGGING AND TESTING:
         [Test the program logic with sample inputs]
         [Identify and fix any logical errors]
         [Verify program correctness]
-        """ if include_debugging else ""
-        
+        """
+            if include_debugging
+            else ""
+        )
+
         prompt = dedent_prompt(f"""
         Problem: {input_text}
         
@@ -451,41 +479,41 @@ class ProgramOfThought(PromptTechnique):
 class RecursionOfThought(PromptTechnique):
     """
     Recursion-of-Thought applies recursive thinking to break down problems.
-    
+
     This technique uses recursive problem-solving strategies, breaking problems
     into smaller instances of the same problem type.
     """
-    
+
     def __init__(self):
         """Initialize Recursion-of-Thought technique."""
         super().__init__(
             name="Recursion-of-Thought",
             identifier="2.2.4",
-            description="Applies recursive thinking to break down problems."
+            description="Applies recursive thinking to break down problems.",
         )
-    
+
     def generate_prompt(self, input_text: str, **kwargs) -> str:
         """
         Generate a Recursion-of-Thought prompt.
-        
+
         Args:
             input_text (str): Input text
             **kwargs: Additional arguments
                 - recursion_depth (int): Maximum recursion depth
                 - base_case_strategy (str): Strategy for identifying base cases
-            
+
         Returns:
             str: Generated Recursion-of-Thought prompt
         """
         recursion_depth = kwargs.get("recursion_depth", 4)
         base_case_strategy = kwargs.get("base_case_strategy", "simplest")
-        
+
         strategy_guidance = {
             "simplest": "Identify the simplest case that can be solved directly",
             "minimal": "Find the minimal problem instance that requires no further breakdown",
-            "trivial": "Locate trivial cases with obvious solutions"
+            "trivial": "Locate trivial cases with obvious solutions",
         }.get(base_case_strategy, "Identify cases that can be solved directly")
-        
+
         prompt = dedent_prompt(f"""
         Problem: {input_text}
         
@@ -553,47 +581,47 @@ class RecursionOfThought(PromptTechnique):
 class SkeletonOfThought(PromptTechnique):
     """
     Skeleton-of-Thought creates a reasoning skeleton before filling in details.
-    
+
     This technique first establishes the overall structure and key points
     of the reasoning, then fills in the detailed content.
     """
-    
+
     def __init__(self):
         """Initialize Skeleton-of-Thought technique."""
         super().__init__(
             name="Skeleton-of-Thought",
             identifier="2.2.4",
-            description="Creates a reasoning skeleton before filling in details."
+            description="Creates a reasoning skeleton before filling in details.",
         )
-    
+
     def generate_prompt(self, input_text: str, **kwargs) -> str:
         """
         Generate a Skeleton-of-Thought prompt.
-        
+
         Args:
             input_text (str): Input text
             **kwargs: Additional arguments
                 - skeleton_depth (str): Depth of skeleton structure
                 - expansion_strategy (str): Strategy for expanding skeleton
-            
+
         Returns:
             str: Generated Skeleton-of-Thought prompt
         """
         skeleton_depth = kwargs.get("skeleton_depth", "detailed")
         expansion_strategy = kwargs.get("expansion_strategy", "systematic")
-        
+
         depth_guidance = {
             "basic": "Create a high-level skeleton with main points",
             "detailed": "Develop a comprehensive skeleton with sub-points",
-            "exhaustive": "Create an exhaustive skeleton covering all aspects"
+            "exhaustive": "Create an exhaustive skeleton covering all aspects",
         }.get(skeleton_depth, "Develop a comprehensive skeleton")
-        
+
         strategy_guidance = {
             "systematic": "Expand each skeleton point systematically",
             "priority": "Expand high-priority skeleton points first",
-            "iterative": "Iteratively refine and expand the skeleton"
+            "iterative": "Iteratively refine and expand the skeleton",
         }.get(expansion_strategy, "Expand systematically")
-        
+
         prompt = dedent_prompt(f"""
         Problem: {input_text}
         
@@ -658,39 +686,41 @@ class SkeletonOfThought(PromptTechnique):
 class TreeOfThought(PromptTechnique):
     """
     Tree-of-Thought explores multiple reasoning paths in a tree structure.
-    
+
     This technique explores different reasoning branches, evaluates them,
     and selects the most promising paths for further exploration.
     """
-    
+
     def __init__(self):
         """Initialize Tree-of-Thought technique."""
         super().__init__(
             name="Tree-of-Thought",
             identifier="2.2.4",
-            description="Explores multiple reasoning paths in a tree structure."
+            description="Explores multiple reasoning paths in a tree structure.",
         )
-    
+
     def generate_prompt(self, input_text: str, **kwargs) -> str:
         """
         Generate a Tree-of-Thought prompt.
-        
+
         Args:
             input_text (str): Input text
             **kwargs: Additional arguments
                 - branching_factor (int): Number of branches to explore at each level
                 - tree_depth (int): Maximum depth of the reasoning tree
                 - evaluation_criteria (List[str]): Criteria for evaluating branches
-            
+
         Returns:
             str: Generated Tree-of-Thought prompt
         """
         branching_factor = kwargs.get("branching_factor", 3)
         tree_depth = kwargs.get("tree_depth", 3)
-        evaluation_criteria = kwargs.get("evaluation_criteria", ["feasibility", "completeness", "efficiency"])
-        
+        evaluation_criteria = kwargs.get(
+            "evaluation_criteria", ["feasibility", "completeness", "efficiency"]
+        )
+
         criteria_text = ", ".join(evaluation_criteria)
-        
+
         # Generate tree structure
         tree_levels = []
         for level in range(tree_depth):
@@ -716,9 +746,9 @@ class TreeOfThought(PromptTechnique):
         Evaluation of Level {level_num} branches using criteria: {criteria_text}
         Selected branches for further exploration: [Choose best branches]
         """)
-        
+
         tree_content = "\n".join(tree_levels)
-        
+
         prompt = dedent_prompt(f"""
         Problem: {input_text}
         
@@ -753,4 +783,4 @@ class TreeOfThought(PromptTechnique):
         Tree-of-Thought Solution:
         [Final answer derived from systematic tree exploration]
         """)
-        return prompt 
+        return prompt

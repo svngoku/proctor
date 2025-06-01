@@ -1,4 +1,4 @@
-name: Python Package
+name: CI/CD Pipeline
 
 on:
   push:
@@ -17,87 +17,148 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
         
     - name: Install uv
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+        
+    - name: Create virtual environment
+      run: uv venv
         
     - name: Install dependencies
       run: |
-        uv pip install -e ".[dev]"
-        uv pip install pytest pytest-cov ruff build
+        source .venv/bin/activate
+        make install-dev
         
-    - name: Lint with ruff
+    - name: Lint and format check
       run: |
-        # Run linter - stop the build if there are Python syntax errors or undefined names
-        ruff check . --select=E9,F63,F7,F82 --target-version=py38
-        # Exit with 0 status for now since we're just getting started with linting
-        ruff check . --exit-zero
+        source .venv/bin/activate
+        make check
         
-    - name: Test with pytest
+    - name: Run core tests
       run: |
-        pytest tests/ -v
+        source .venv/bin/activate
+        make test-core
 
   build:
     needs: test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.8"
+        python-version: "3.11"
         
     - name: Install uv
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+        
+    - name: Create virtual environment
+      run: uv venv
         
     - name: Install dependencies
       run: |
-        uv pip install build wheel
+        source .venv/bin/activate
+        make install-dev
         
     - name: Build package
       run: |
-        python -m build
+        source .venv/bin/activate
+        make build
+        
+    - name: Validate distribution
+      run: |
+        source .venv/bin/activate
+        make check-dist
         
     - name: Archive production artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dist
         path: dist
 
-  publish:
+  publish-test:
     needs: build
     runs-on: ubuntu-latest
-    # Only publish on tag pushes
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Publish to Test PyPI on pushes to main/master (not tags)
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && !startsWith(github.ref, 'refs/tags/')
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.8"
+        python-version: "3.11"
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+        
+    - name: Create virtual environment
+      run: uv venv
         
     - name: Download artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: dist
         path: dist
         
     - name: Install dependencies
       run: |
-        pip install twine
+        source .venv/bin/activate
+        make ensure-twine
+        
+    - name: Publish to Test PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+      run: |
+        source .venv/bin/activate
+        uv run twine upload --repository testpypi dist/*
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    # Only publish to PyPI on tag pushes
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+        
+    - name: Create virtual environment
+      run: uv venv
+        
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist
+        
+    - name: Install dependencies
+      run: |
+        source .venv/bin/activate
+        make ensure-twine
         
     - name: Publish to PyPI
       env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
-        twine upload dist/*
+        source .venv/bin/activate
+        uv run twine upload dist/*
