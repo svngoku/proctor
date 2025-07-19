@@ -33,7 +33,7 @@ print("🤖 Example 1: Google Gemini 2.5 Flash via OpenRouter")
 print("=" * 80)
 
 gemini_config = {
-    "model": "openrouter/google/gemini-2.5-flash-preview-05-20",  # Updated model name
+    "model": "google/gemini-2.5-flash",  # Remove openrouter/ prefix - LiteLLM detects it from api_base
     "api_base": "https://openrouter.ai/api/v1",
     "api_key": openrouter_key,
     "temperature": 0.3,
@@ -64,7 +64,7 @@ print("🧠 Example 2: Claude 4 Sonnet via OpenRouter")
 print("=" * 80)
 
 claude_config = {
-    "model": "openrouter/anthropic/claude-sonnet-4",
+    "model": "anthropic/claude-3.5-sonnet",  # Fixed model name
     "api_base": "https://openrouter.ai/api/v1",
     "api_key": openrouter_key,
     "temperature": 0.7,
@@ -82,7 +82,7 @@ print("🔬 Example 3: DeepSeek R1 via OpenRouter")
 print("=" * 80)
 
 deepseek_config = {
-    "model": "openrouter/deepseek/deepseek-r1-0528",
+    "model": "deepseek/deepseek-r1",  # Fixed model name
     "api_base": "https://openrouter.ai/api/v1",
     "api_key": openrouter_key,
     "temperature": 0.6,
@@ -109,7 +109,7 @@ print("🦙 Example 4: Llama 4 Scout via OpenRouter")
 print("=" * 80)
 
 llama_config = {
-    "model": "openrouter/meta-llama/llama-4-scout",
+    "model": "meta-llama/llama-3.3-70b-instruct",  # Fixed model name (using available model)
     "api_base": "https://openrouter.ai/api/v1",
     "api_key": openrouter_key,
     "temperature": 0.6,
@@ -131,7 +131,7 @@ print("⚡ Example 5: Mistral Small 3.1 24B (Fast & Efficient)")
 print("=" * 80)
 
 mistral_config = {
-    "model": "openrouter/mistralai/mistral-small-3.1-24b-instruct",
+    "model": "mistralai/mistral-small",  # Fixed model name
     "api_base": "https://openrouter.ai/api/v1",
     "api_key": openrouter_key,
     "temperature": 0.8,
@@ -150,7 +150,7 @@ print("\n" + "=" * 80)
 print("✅ Successfully demonstrated using 5 different OpenRouter models!")
 print("💡 Key points:")
 print("   - Use 'llm_config=' parameter (not 'config=')")
-print("   - Prefix OpenRouter models with 'openrouter/'")
+print("   - DO NOT prefix models with 'openrouter/' - LiteLLM detects it from api_base")
 print("   - You can override any model configuration per technique")
 print("   - LiteLLM handles the API differences automatically")
 print("   - Different models have different strengths and pricing")
