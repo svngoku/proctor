@@ -86,8 +86,17 @@ from .decomposition.techniques import (
     TreeOfThought,
 )
 
+# Import Optimization techniques
+from .optimize import (
+    PromptOptimizer,
+    APEOptimizer,
+    ProTeGiOptimizer,
+    RLPromptOptimizer,
+    OPTIMIZERS,
+)
+
 # Version
-__version__ = "1.0.0"
+__version__ = "0.1.3"
 
 # Dictionary of all techniques for easy access (using class types)
 ALL_TECHNIQUES: Dict[str, Type[PromptTechnique]] = {
@@ -271,6 +280,12 @@ __all__ = [
     "RecursionOfThought",
     "SkeletonOfThought",
     "TreeOfThought",
+    # Optimization classes
+    "PromptOptimizer",
+    "APEOptimizer",
+    "ProTeGiOptimizer",
+    "RLPromptOptimizer",
+    "OPTIMIZERS",
     # Utility functions and constants
     "list_techniques",
     "get_technique",
