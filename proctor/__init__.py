@@ -1,5 +1,12 @@
 """
 Proctor: A Python package for text-based prompting techniques.
+
+Version 0.2.0+ includes DSPy integration for:
+- Structured outputs with type safety
+- Automatic prompt optimization
+- Better composition and modularity
+
+See DSPY_OPTIMIZATION_PLAN.md and DSPY_MIGRATION_GUIDE.md for details.
 """
 
 from typing import List, Optional, Dict, Type  # Added Type
@@ -279,3 +286,18 @@ __all__ = [
     # Exceptions
     "LLMError",
 ]
+
+# ============================================================================
+# DSPy Integration (v0.2.0+)
+# ============================================================================
+# DSPy-powered techniques are available in separate modules:
+#
+# from proctor.dspy_lm import configure_dspy_with_litellm
+# from proctor.dspy_techniques import (
+#     DSPyChainOfThought,
+#     DSPyZeroShotCoT,
+#     DSPySelfConsistency,
+# )
+#
+# See DSPY_MIGRATION_GUIDE.md for usage examples and migration path.
+# ============================================================================
