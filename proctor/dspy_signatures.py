@@ -7,12 +7,12 @@ contracts that DSPy can use for optimization and type safety.
 """
 
 import dspy
-from typing import List, Optional
 
 
 # ============================================================================
 # Thought Generation Signatures
 # ============================================================================
+
 
 class ChainOfThoughtSignature(dspy.Signature):
     """
@@ -33,7 +33,9 @@ class AnalogicalReasoningSignature(dspy.Signature):
     """Reasoning by analogy."""
 
     problem: str = dspy.InputField(desc="The problem to solve")
-    analogy: str = dspy.OutputField(desc="A relevant analogy to help understand the problem")
+    analogy: str = dspy.OutputField(
+        desc="A relevant analogy to help understand the problem"
+    )
     reasoning: str = dspy.OutputField(desc="How the analogy applies")
     answer: str = dspy.OutputField(desc="Solution based on the analogy")
 
@@ -42,7 +44,9 @@ class StepBackSignature(dspy.Signature):
     """Step-back prompting to abstract the problem."""
 
     problem: str = dspy.InputField(desc="The specific problem")
-    abstract_problem: str = dspy.OutputField(desc="Higher-level abstraction of the problem")
+    abstract_problem: str = dspy.OutputField(
+        desc="Higher-level abstraction of the problem"
+    )
     general_principle: str = dspy.OutputField(desc="General principles that apply")
     specific_answer: str = dspy.OutputField(desc="Answer to the specific problem")
 
@@ -50,6 +54,7 @@ class StepBackSignature(dspy.Signature):
 # ============================================================================
 # Role-Based Signatures
 # ============================================================================
+
 
 class RoleBasedSignature(dspy.Signature):
     """Response from a specific role or persona."""
@@ -73,6 +78,7 @@ class ExpertAnalysisSignature(dspy.Signature):
 # ============================================================================
 # Decomposition Signatures
 # ============================================================================
+
 
 class ProblemDecompositionSignature(dspy.Signature):
     """Decompose a complex problem into smaller sub-problems."""
@@ -107,6 +113,7 @@ class PlanAndSolveSignature(dspy.Signature):
 # Verification & Self-Criticism Signatures
 # ============================================================================
 
+
 class VerificationSignature(dspy.Signature):
     """Verify a proposed solution."""
 
@@ -136,13 +143,16 @@ class ChainOfVerificationSignature(dspy.Signature):
     verification_questions: str = dspy.OutputField(
         desc="Questions to ask for verification (one per line)"
     )
-    verification_answers: str = dspy.OutputField(desc="Answers to verification questions")
+    verification_answers: str = dspy.OutputField(
+        desc="Answers to verification questions"
+    )
     final_verdict: str = dspy.OutputField(desc="Final verification verdict")
 
 
 # ============================================================================
 # Style & Formatting Signatures
 # ============================================================================
+
 
 class StyledOutputSignature(dspy.Signature):
     """Generate output in a specific style."""
@@ -151,7 +161,9 @@ class StyledOutputSignature(dspy.Signature):
     style: str = dspy.InputField(
         desc="Desired style (e.g., 'formal', 'casual', 'technical')"
     )
-    styled_output: str = dspy.OutputField(desc="Content formatted in the requested style")
+    styled_output: str = dspy.OutputField(
+        desc="Content formatted in the requested style"
+    )
 
 
 class EmotionalResponseSignature(dspy.Signature):
@@ -167,6 +179,7 @@ class EmotionalResponseSignature(dspy.Signature):
 # ============================================================================
 # Few-Shot Learning Signatures
 # ============================================================================
+
 
 class FewShotPredictionSignature(dspy.Signature):
     """Make predictions based on examples."""
@@ -190,6 +203,7 @@ class ExampleSelectionSignature(dspy.Signature):
 # Ensembling Signatures
 # ============================================================================
 
+
 class ConsensusSignature(dspy.Signature):
     """Reach consensus from multiple answers."""
 
@@ -204,7 +218,9 @@ class DiverseReasoningSignature(dspy.Signature):
     """Generate diverse reasoning approaches."""
 
     problem: str = dspy.InputField(desc="The problem to solve")
-    approach: str = dspy.InputField(desc="Which approach to use (e.g., 'analytical', 'creative')")
+    approach: str = dspy.InputField(
+        desc="Which approach to use (e.g., 'analytical', 'creative')"
+    )
     reasoning: str = dspy.OutputField(desc="Reasoning using the specified approach")
     answer: str = dspy.OutputField(desc="Answer from this approach")
 
@@ -212,6 +228,7 @@ class DiverseReasoningSignature(dspy.Signature):
 # ============================================================================
 # Specialized Signatures
 # ============================================================================
+
 
 class CodeGenerationSignature(dspy.Signature):
     """Generate code to solve a problem."""
@@ -227,7 +244,9 @@ class SummarizationSignature(dspy.Signature):
     """Summarize text with key points."""
 
     text: str = dspy.InputField(desc="Text to summarize")
-    length: str = dspy.InputField(desc="Desired length (e.g., 'brief', 'detailed')", default="brief")
+    length: str = dspy.InputField(
+        desc="Desired length (e.g., 'brief', 'detailed')", default="brief"
+    )
     key_points: str = dspy.OutputField(desc="Key points from the text")
     summary: str = dspy.OutputField(desc="Concise summary")
 

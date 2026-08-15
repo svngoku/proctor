@@ -89,9 +89,7 @@ def _prepare_config(
     return config
 
 
-def _build_messages(
-    prompt: str, system_prompt: Optional[str]
-) -> list:
+def _build_messages(prompt: str, system_prompt: Optional[str]) -> list:
     """Build the OpenRouter chat messages list."""
     messages = []
     if system_prompt:
@@ -107,7 +105,9 @@ def _openrouter_kwargs(config: Dict[str, Any]) -> Dict[str, Any]:
     return kwargs
 
 
-def _send_kwargs(config: Dict[str, Any], messages: list, stream: bool) -> Dict[str, Any]:
+def _send_kwargs(
+    config: Dict[str, Any], messages: list, stream: bool
+) -> Dict[str, Any]:
     """Assemble keyword arguments for ``client.chat.send``."""
     kwargs: Dict[str, Any] = {
         "model": _normalize_model(config["model"]),

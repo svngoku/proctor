@@ -78,9 +78,7 @@ class DSPyChainOfThought(DSPyPromptTechnique):
         Returns:
             str: Formatted string with reasoning and answer
         """
-        log.info(
-            f"[DSPy] Executing: [bold magenta]{self.name}[/]"
-        )
+        log.info(f"[DSPy] Executing: [bold magenta]{self.name}[/]")
 
         result = self.forward(problem=input_text, **kwargs)
 
@@ -169,8 +167,7 @@ class DSPySelfConsistency(DSPyPromptTechnique):
 
         # Create multiple independent CoT predictors
         self.predictors = [
-            dspy.ChainOfThought(ChainOfThoughtSignature)
-            for _ in range(num_paths)
+            dspy.ChainOfThought(ChainOfThoughtSignature) for _ in range(num_paths)
         ]
 
     def forward(self, problem: str, **kwargs) -> dspy.Prediction:
@@ -198,9 +195,9 @@ class DSPySelfConsistency(DSPyPromptTechnique):
             try:
                 result = predictor(problem=problem)
                 results.append(result)
-                log.debug(f"[DSPy] Path {i+1}: {result.answer}")
+                log.debug(f"[DSPy] Path {i + 1}: {result.answer}")
             except Exception as e:
-                log.warning(f"[DSPy] Path {i+1} failed: {e}")
+                log.warning(f"[DSPy] Path {i + 1} failed: {e}")
                 continue
 
         if not results:
@@ -258,10 +255,11 @@ class DSPySelfConsistency(DSPyPromptTechnique):
         output_lines.append(f"\nReasoning Paths ({len(result.reasoning_paths)}):")
         for i, reasoning in enumerate(result.reasoning_paths, 1):
             output_lines.append(f"\nPath {i}:")
-            output_lines.append(f"  {reasoning[:200]}..." if len(reasoning) > 200 else f"  {reasoning}")
+            output_lines.append(
+                f"  {reasoning[:200]}..." if len(reasoning) > 200 else f"  {reasoning}"
+            )
 
         output = "\n".join(output_lines)
         log.info(f"[DSPy] Output:\n[green]{output}[/]")
 
         return output
-

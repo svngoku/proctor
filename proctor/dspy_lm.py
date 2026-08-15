@@ -28,7 +28,11 @@ def _flatten_messages(messages: List[Dict[str, str]]) -> tuple[Optional[str], st
 
 def _openai_response(text: str, model: str) -> SimpleNamespace:
     return SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(content=text, tool_calls=None), logprobs=None)],
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(content=text, tool_calls=None), logprobs=None
+            )
+        ],
         usage={},
         model=model,
     )
@@ -65,15 +69,24 @@ class LiteLLMLanguageModel(dspy.BaseLM):
             "api_base": self.kwargs.get("api_base"),
             "api_key": self.kwargs.get("api_key"),
             "max_tokens": kwargs.get("max_tokens", self.kwargs.get("max_tokens", 1000)),
-            "temperature": kwargs.get("temperature", self.kwargs.get("temperature", 0.7)),
+            "temperature": kwargs.get(
+                "temperature", self.kwargs.get("temperature", 0.7)
+            ),
         }
 
-    def _to_prompt(self, prompt: Optional[str], messages: Optional[List[Dict[str, str]]]) -> tuple[Optional[str], str]:
+    def _to_prompt(
+        self, prompt: Optional[str], messages: Optional[List[Dict[str, str]]]
+    ) -> tuple[Optional[str], str]:
         if messages:
             return _flatten_messages(messages)
         return None, prompt or ""
 
-    def forward(self, prompt: Optional[str] = None, messages: Optional[List[Dict[str, str]]] = None, **kwargs):
+    def forward(
+        self,
+        prompt: Optional[str] = None,
+        messages: Optional[List[Dict[str, str]]] = None,
+        **kwargs,
+    ):
         system_prompt, text = self._to_prompt(prompt, messages)
         try:
             response = call_llm(
@@ -87,7 +100,12 @@ class LiteLLMLanguageModel(dspy.BaseLM):
             raise
         return _openai_response(response, self.model)
 
-    async def aforward(self, prompt: Optional[str] = None, messages: Optional[List[Dict[str, str]]] = None, **kwargs):
+    async def aforward(
+        self,
+        prompt: Optional[str] = None,
+        messages: Optional[List[Dict[str, str]]] = None,
+        **kwargs,
+    ):
         system_prompt, text = self._to_prompt(prompt, messages)
         try:
             response = await call_llm_async(

@@ -8,23 +8,21 @@ https://aclanthology.org/2023.emnlp-main.494/
 from typing import List, Dict, Any, Optional
 from . import PromptOptimizer
 from ..base import PromptTechnique
-from ..utils import log
 
 
 class ProTeGiOptimizer(PromptOptimizer):
     """
     ProTeGi optimizer using textual gradients for iterative prompt refinement.
-    
+
     This approach uses LLM-generated critiques as "gradients" to iteratively
     improve prompts, similar to gradient descent in continuous optimization.
     """
-    
+
     def __init__(self):
         super().__init__(
-            name="ProTeGi",
-            description="Prompt Optimization with Textual Gradients"
+            name="ProTeGi", description="Prompt Optimization with Textual Gradients"
         )
-    
+
     async def optimize(
         self,
         task_description: str,
@@ -33,11 +31,11 @@ class ProTeGiOptimizer(PromptOptimizer):
         technique: Optional[PromptTechnique] = None,
         num_iterations: int = 10,
         beam_width: int = 5,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Optimize prompts using textual gradients.
-        
+
         Implementation coming soon - this is a placeholder.
         """
         raise NotImplementedError("ProTeGi optimizer is not implemented")

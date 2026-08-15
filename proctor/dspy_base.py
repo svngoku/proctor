@@ -249,7 +249,9 @@ class DSPySignatureBuilder:
         self.fields[name] = (type_, dspy.InputField(desc=desc))
         return self
 
-    def add_output(self, name: str, desc: str = "", type_=str) -> "DSPySignatureBuilder":
+    def add_output(
+        self, name: str, desc: str = "", type_=str
+    ) -> "DSPySignatureBuilder":
         """
         Add an output field.
 
@@ -282,21 +284,14 @@ class DSPySignatureBuilder:
         class_dict["__annotations__"] = annotations
 
         # Create the class
-        signature_class = type(
-            self.name,
-            (dspy.Signature,),
-            class_dict
-        )
+        signature_class = type(self.name, (dspy.Signature,), class_dict)
 
         return signature_class
 
 
 # Utility function for creating simple signatures
 def create_signature(
-    name: str,
-    inputs: Dict[str, str],
-    outputs: Dict[str, str],
-    doc: str = ""
+    name: str, inputs: Dict[str, str], outputs: Dict[str, str], doc: str = ""
 ) -> type:
     """
     Create a DSPy Signature from simple dictionaries.

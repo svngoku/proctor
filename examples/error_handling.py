@@ -2,13 +2,12 @@
 Example demonstrating error handling in the proctor package.
 """
 
-import os
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
-from proctor import ZeroShotCoT, get_technique
+from proctor import ZeroShotCoT, get_technique  # noqa: E402
 
 
 def demonstrate_error_handling():
@@ -33,9 +32,6 @@ def demonstrate_error_handling():
     # 2. Demonstrate API error with invalid API key
     print("\n2. API Error with Invalid Key")
     print("-" * 30)
-
-    # Set an invalid API key to demonstrate API error
-    original_api_key = os.environ.get("OPENROUTER_API_KEY", "")
 
     try:
         # Generate a prompt, which should work even with an invalid key

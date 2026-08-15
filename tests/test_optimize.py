@@ -1,9 +1,14 @@
 import asyncio
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-from proctor.optimize import APEOptimizer, OPTIMIZERS, ProTeGiOptimizer, RLPromptOptimizer
+from proctor.optimize import (
+    APEOptimizer,
+    OPTIMIZERS,
+    ProTeGiOptimizer,
+    RLPromptOptimizer,
+)
 from proctor.optimize.ape import APEOptimizer as APE
 from proctor.thought_generation.techniques import ChainOfThought
 
@@ -28,11 +33,15 @@ def test_registry_and_stubs():
 def test_ape_empty_candidates_fail(mock_call_llm):
     mock_call_llm.side_effect = RuntimeError("boom")
     with pytest.raises(RuntimeError, match="boom"):
-        asyncio.run(APEOptimizer().optimize("task", [], [{"input": "1", "output": "1"}]))
+        asyncio.run(
+            APEOptimizer().optimize("task", [], [{"input": "1", "output": "1"}])
+        )
 
 
 def test_ape_uses_custom_instructions():
     technique = ChainOfThought()
     prompt = technique.generate_prompt("2+2", custom_instructions="IGNORE PREVIOUS")
     assert "IGNORE PREVIOUS" in prompt
-    assert technique.generate_prompt("2+2", instruction="IGNORE") == technique.generate_prompt("2+2")
+    assert technique.generate_prompt(
+        "2+2", instruction="IGNORE"
+    ) == technique.generate_prompt("2+2")

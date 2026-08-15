@@ -140,7 +140,9 @@ class PromptTechnique(ABC):
 
         try:
             # Call LLM asynchronously with retry handling
-            response = await call_llm_async(prompt, system_prompt, llm_config, max_retries)
+            response = await call_llm_async(
+                prompt, system_prompt, llm_config, max_retries
+            )
             log.info(f"LLM Response:\n[green]--- START ---\n{response}\n--- END ---[/]")
             return response
 

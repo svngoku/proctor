@@ -237,4 +237,8 @@ def list_open_source_models(family: Optional[str] = None) -> List[str]:
 
 def is_known_model(model: str) -> bool:
     """Return True if ``model`` is in the curated registry or floating aliases."""
-    return model in ALL_OPENROUTER_MODELS or model in FLOATING_ALIASES or model in FLOATING_ALIASES.values()
+    return (
+        model in ALL_OPENROUTER_MODELS
+        or model in FLOATING_ALIASES
+        or model in FLOATING_ALIASES.values()
+    )

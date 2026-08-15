@@ -26,14 +26,20 @@ def test_composite_forwards_prediction_fields():
             assert kwargs["answer"] == "a"
             return dspy.Prediction(answer=kwargs["answer"])
 
-    result = DSPyCompositeTechnique("c", "id", modules=[_Dummy("n", "id"), Second("s", "sid")]).forward(problem="q")
+    result = DSPyCompositeTechnique(
+        "c", "id", modules=[_Dummy("n", "id"), Second("s", "sid")]
+    ).forward(problem="q")
     assert result.answer == "a"
 
 
 def test_self_consistency_vote_and_all_failed():
     sc = DSPySelfConsistency(num_paths=3)
     good = SimpleNamespace(answer="9", reasoning="left")
-    sc.predictors = [lambda **_: good, lambda **_: good, lambda **_: SimpleNamespace(answer="0", reasoning="x")]
+    sc.predictors = [
+        lambda **_: good,
+        lambda **_: good,
+        lambda **_: SimpleNamespace(answer="0", reasoning="x"),
+    ]
     result = sc.forward(problem="q")
     assert result.answer == "9"
     assert result.confidence == pytest.approx(2 / 3)
@@ -44,10 +50,18 @@ def test_self_consistency_vote_and_all_failed():
 
 
 @patch("proctor.dspy_lm.call_llm", return_value="ok")
-@patch("proctor.dspy_lm.get_llm_config", return_value={"model": "m", "api_key": "k", "api_base": "https://x"})
+@patch(
+    "proctor.dspy_lm.get_llm_config",
+    return_value={"model": "m", "api_key": "k", "api_base": "https://x"},
+)
 def test_lm_forward_uses_call_llm(mock_cfg, mock_call):
     lm = LiteLLMLanguageModel()
-    out = lm.forward(messages=[{"role": "system", "content": "sys"}, {"role": "user", "content": "hi"}])
+    out = lm.forward(
+        messages=[
+            {"role": "system", "content": "sys"},
+            {"role": "user", "content": "hi"},
+        ]
+    )
     assert out.choices[0].message.content == "ok"
     mock_call.assert_called_once()
     assert mock_call.call_args.kwargs["system_prompt"] == "sys"
@@ -61,7 +75,9 @@ async def test_execute_async(mock_async):
     mock_async.assert_awaited_once()
 
 
-@patch("proctor.base.call_llm_async", new_callable=AsyncMock, side_effect=LLMError("nope"))
+@patch(
+    "proctor.base.call_llm_async", new_callable=AsyncMock, side_effect=LLMError("nope")
+)
 async def test_execute_async_reraises_llm_error(mock_async):
     with pytest.raises(LLMError):
         await ChainOfThought().execute_async("2+2")

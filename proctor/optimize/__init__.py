@@ -14,16 +14,16 @@ from ..base import PromptTechnique
 class PromptOptimizer(ABC):
     """
     Base class for all prompt optimization algorithms.
-    
+
     This provides a common interface for different optimization strategies
     allowing users to swap algorithms without code changes.
     """
-    
+
     def __init__(self, name: str, description: str = ""):
         self.name = name
         self.description = description
         self.optimization_history: List[Dict[str, Any]] = []
-    
+
     @abstractmethod
     async def optimize(
         self,
@@ -31,18 +31,18 @@ class PromptOptimizer(ABC):
         seed_prompts: List[str],
         labeled_examples: List[Dict[str, str]],
         technique: Optional[PromptTechnique] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Optimize prompts for a given task.
-        
+
         Args:
             task_description: Natural language description of the task
             seed_prompts: Initial prompts to start optimization from
             labeled_examples: List of input-output pairs for evaluation
             technique: Optional prompt technique to optimize within
             **kwargs: Algorithm-specific parameters
-            
+
         Returns:
             Dict containing:
                 - 'best_prompt': The optimized prompt string
@@ -51,7 +51,7 @@ class PromptOptimizer(ABC):
                 - 'history': Optimization trajectory
         """
         pass
-    
+
     def get_optimization_history(self) -> List[Dict[str, Any]]:
         """Return the history of optimization steps."""
         return self.optimization_history
@@ -71,7 +71,7 @@ OPTIMIZERS: Dict[str, Type[PromptOptimizer]] = {
 
 __all__ = [
     "PromptOptimizer",
-    "APEOptimizer", 
+    "APEOptimizer",
     "ProTeGiOptimizer",
     "RLPromptOptimizer",
     "OPTIMIZERS",

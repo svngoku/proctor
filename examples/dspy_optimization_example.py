@@ -25,37 +25,31 @@ def create_training_data():
     """Create training examples for optimization."""
     # Training examples with input/output pairs
     examples = [
-        {
-            "problem": "What is 25% of 200?",
-            "answer": "50"
-        },
+        {"problem": "What is 25% of 200?", "answer": "50"},
         {
             "problem": "If a car travels 60 km in 1.5 hours, what is its speed?",
-            "answer": "40 km/h"
+            "answer": "40 km/h",
         },
         {
             "problem": "A store sells apples for $2 each. How much for 7 apples?",
-            "answer": "$14"
+            "answer": "$14",
         },
         {
             "problem": "What is the area of a rectangle with length 8 cm and width 5 cm?",
-            "answer": "40 square cm"
+            "answer": "40 square cm",
         },
         {
             "problem": "If you save $10 per week, how much in 12 weeks?",
-            "answer": "$120"
+            "answer": "$120",
         },
         {
             "problem": "A pizza is cut into 8 slices. You eat 3. How many remain?",
-            "answer": "5 slices"
+            "answer": "5 slices",
         },
-        {
-            "problem": "What is 30% of 150?",
-            "answer": "45"
-        },
+        {"problem": "What is 30% of 150?", "answer": "45"},
         {
             "problem": "A book has 240 pages. You read 60 pages. How many left?",
-            "answer": "180 pages"
+            "answer": "180 pages",
         },
     ]
 
@@ -63,10 +57,9 @@ def create_training_data():
     trainset = []
     for ex in examples:
         trainset.append(
-            dspy.Example(
-                problem=ex["problem"],
-                answer=ex["answer"]
-            ).with_inputs("problem")
+            dspy.Example(problem=ex["problem"], answer=ex["answer"]).with_inputs(
+                "problem"
+            )
         )
 
     return trainset
@@ -97,8 +90,9 @@ def accuracy_metric(example, pred, trace=None):
     try:
         # Extract numbers
         import re
-        pred_numbers = re.findall(r'\d+\.?\d*', prediction_text)
-        expected_numbers = re.findall(r'\d+\.?\d*', expected_text)
+
+        pred_numbers = re.findall(r"\d+\.?\d*", prediction_text)
+        expected_numbers = re.findall(r"\d+\.?\d*", expected_text)
 
         if pred_numbers and expected_numbers:
             if float(pred_numbers[0]) == float(expected_numbers[0]):
@@ -143,14 +137,14 @@ def example_1_basic_optimization():
     teleprompter = dspy.BootstrapFewShot(
         metric=accuracy_metric,
         max_bootstrapped_demos=3,  # Number of examples to bootstrap
-        max_labeled_demos=2,        # Number of labeled examples to use
+        max_labeled_demos=2,  # Number of labeled examples to use
     )
 
     # Compile the optimized program
     try:
         optimized_cot = teleprompter.compile(
             student=cot,
-            trainset=trainset[:5]  # Use subset for faster optimization
+            trainset=trainset[:5],  # Use subset for faster optimization
         )
 
         print("\n✅ Optimization complete!")
@@ -165,7 +159,7 @@ def example_1_basic_optimization():
         print("\n📈 Comparison:")
         print(f"  Before: {result_before.answer}")
         print(f"  After:  {result_after.answer}")
-        print(f"  Expected: 50")
+        print("  Expected: 50")
 
     except Exception as e:
         print(f"\n⚠️  Optimization failed: {e}")
@@ -188,7 +182,7 @@ def example_2_evaluate_performance():
     trainset = all_data[:6]
     testset = all_data[6:]
 
-    print(f"\n📚 Dataset split:")
+    print("\n📚 Dataset split:")
     print(f"  Training: {len(trainset)} examples")
     print(f"  Testing:  {len(testset)} examples")
 
@@ -203,10 +197,7 @@ def example_2_evaluate_performance():
             max_labeled_demos=2,
         )
 
-        optimized_cot = teleprompter.compile(
-            student=cot,
-            trainset=trainset
-        )
+        optimized_cot = teleprompter.compile(student=cot, trainset=trainset)
 
         # Evaluate both versions
         print("\n📊 Evaluating on test set...")
@@ -268,10 +259,7 @@ def example_3_save_and_load_optimized():
             max_bootstrapped_demos=2,
         )
 
-        optimized_cot = teleprompter.compile(
-            student=cot,
-            trainset=trainset
-        )
+        optimized_cot = teleprompter.compile(student=cot, trainset=trainset)
 
         # Save to file
         save_path = "/tmp/optimized_cot.json"

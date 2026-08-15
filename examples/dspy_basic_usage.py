@@ -152,10 +152,10 @@ def example_4_typed_access():
     print("\n🔍 Accessing Fields:")
 
     # Type-safe field access
-    print(f"\nresult.reasoning:")
+    print("\nresult.reasoning:")
     print(f"  {result.reasoning}")
 
-    print(f"\nresult.answer:")
+    print("\nresult.answer:")
     print(f"  {result.answer}")
 
     # You can use these in further processing

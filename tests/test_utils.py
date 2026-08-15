@@ -99,9 +99,7 @@ class TestUtils(unittest.TestCase):
     @patch("proctor.utils.OpenRouter")
     @patch("proctor.utils.get_llm_config")
     @patch("time.sleep")  # Mock sleep to avoid delays in tests
-    def test_call_llm_retry_success(
-        self, mock_sleep, mock_get_config, mock_openrouter
-    ):
+    def test_call_llm_retry_success(self, mock_sleep, mock_get_config, mock_openrouter):
         """Test LLM call with retry that eventually succeeds."""
         mock_get_config.return_value = {
             "model": "test-model",
