@@ -102,8 +102,22 @@ from .optimize import (
     OPTIMIZERS,
 )
 
+# Import OpenRouter model registry
+from .models import (
+    OPENROUTER_BASE_URL,
+    RECENT_MODELS,
+    OPEN_SOURCE_MODELS,
+    CODING_MODELS,
+    FREE_MODELS,
+    FLOATING_ALIASES,
+    ALL_OPENROUTER_MODELS,
+    list_models,
+    list_open_source_models,
+    is_known_model,
+)
+
 # Version
-__version__ = "0.1.3"
+__version__ = "0.2.0"
 
 # Dictionary of all techniques for easy access (using class types)
 ALL_TECHNIQUES: Dict[str, Type[PromptTechnique]] = {
@@ -293,6 +307,17 @@ __all__ = [
     "ProTeGiOptimizer",
     "RLPromptOptimizer",
     "OPTIMIZERS",
+    # OpenRouter model registry
+    "OPENROUTER_BASE_URL",
+    "RECENT_MODELS",
+    "OPEN_SOURCE_MODELS",
+    "CODING_MODELS",
+    "FREE_MODELS",
+    "FLOATING_ALIASES",
+    "ALL_OPENROUTER_MODELS",
+    "list_models",
+    "list_open_source_models",
+    "is_known_model",
     # Utility functions and constants
     "list_techniques",
     "get_technique",

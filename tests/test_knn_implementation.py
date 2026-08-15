@@ -185,7 +185,7 @@ class TestSemanticKNNMissingDeps(unittest.TestCase):
         from proctor.few_shot.knn_implementation import SemanticKNN
 
         with self.assertRaises(ImportError) as context:
-            knn = SemanticKNN()
+            SemanticKNN()
 
         self.assertIn("Required dependencies not available", str(context.exception))
 
