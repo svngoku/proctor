@@ -9,6 +9,13 @@ from proctor import (
     EmotionPrompting,
     list_techniques,
 )
+from proctor.models import (
+    CLAUDE_SONNET_5,
+    DEEPSEEK_R1,
+    GEMINI_3_7_FLASH,
+    LLAMA_4_MAVERICK,
+    OPENROUTER_BASE_URL,
+)
 
 load_dotenv()
 
@@ -28,13 +35,13 @@ if not openrouter_key:
     )
     exit(1)
 
-# Example 1: Using Google Gemini 2.5 Flash via OpenRouter
-print("🤖 Example 1: Google Gemini 2.5 Flash via OpenRouter")
+# Example 1: Gemini 3.7 Flash via OpenRouter
+print("🤖 Example 1: Gemini 3.7 Flash via OpenRouter")
 print("=" * 80)
 
 gemini_config = {
-    "model": "google/gemini-2.5-flash",  # Remove openrouter/ prefix - LiteLLM detects it from api_base
-    "api_base": "https://openrouter.ai/api/v1",
+    "model": GEMINI_3_7_FLASH,
+    "api_base": OPENROUTER_BASE_URL,
     "api_key": openrouter_key,
     "temperature": 0.3,
     "max_tokens": 1500,
@@ -60,12 +67,12 @@ print(f"Gemini Response: {response[:300]}...")
 print("\n" + "=" * 80)
 
 
-print("🧠 Example 2: Claude 4 Sonnet via OpenRouter")
+print("🧠 Example 2: Claude Sonnet 5 via OpenRouter")
 print("=" * 80)
 
 claude_config = {
-    "model": "anthropic/claude-3.5-sonnet",  # Fixed model name
-    "api_base": "https://openrouter.ai/api/v1",
+    "model": CLAUDE_SONNET_5,
+    "api_base": OPENROUTER_BASE_URL,
     "api_key": openrouter_key,
     "temperature": 0.7,
     "max_tokens": 2000,
@@ -82,8 +89,8 @@ print("🔬 Example 3: DeepSeek R1 via OpenRouter")
 print("=" * 80)
 
 deepseek_config = {
-    "model": "deepseek/deepseek-r1",  # Fixed model name
-    "api_base": "https://openrouter.ai/api/v1",
+    "model": DEEPSEEK_R1,
+    "api_base": OPENROUTER_BASE_URL,
     "api_key": openrouter_key,
     "temperature": 0.6,
     "max_tokens": 3000,
@@ -104,13 +111,12 @@ print(f"DeepSeek R1 Response: {response[:300]}...")
 
 print("\n" + "=" * 80)
 
-# Example 4: Using Llama 3.1 405B via OpenRouter (Most capable open model)
-print("🦙 Example 4: Llama 4 Scout via OpenRouter")
+print("🦙 Example 4: Llama 4 Maverick via OpenRouter")
 print("=" * 80)
 
 llama_config = {
-    "model": "meta-llama/llama-3.3-70b-instruct",  # Fixed model name (using available model)
-    "api_base": "https://openrouter.ai/api/v1",
+    "model": LLAMA_4_MAVERICK,
+    "api_base": OPENROUTER_BASE_URL,
     "api_key": openrouter_key,
     "temperature": 0.6,
     "max_tokens": 2500,
@@ -122,17 +128,17 @@ response = llama_technique.execute(
     llm_config=llama_config,
     emotion="thoughtful and methodical",  # This goes to EmotionPrompting
 )
-print(f"Llama 4 Scout Response: {response[:300]}...")
+print(f"Llama 4 Maverick Response: {response[:300]}...")
 
 print("\n" + "=" * 80)
 
 # Example 5: Using a smaller, faster model for quick tasks
-print("⚡ Example 5: Mistral Small 3.1 24B (Fast & Efficient)")
+print("⚡ Example 5: Mistral Small 2603 (Fast & Efficient)")
 print("=" * 80)
 
 mistral_config = {
-    "model": "mistralai/mistral-small",  # Fixed model name
-    "api_base": "https://openrouter.ai/api/v1",
+    "model": "mistralai/mistral-small-2603",
+    "api_base": OPENROUTER_BASE_URL,
     "api_key": openrouter_key,
     "temperature": 0.8,
     "max_tokens": 1000,
@@ -144,13 +150,12 @@ response = quick_technique.execute(
     llm_config=mistral_config,
     role="Construction Project Manager",
 )
-print(f"Mistral Small 3.1 24B Response: {response[:300]}...")
+print(f"Mistral Small 2603 Response: {response[:300]}...")
 
 print("\n" + "=" * 80)
 print("✅ Successfully demonstrated using 5 different OpenRouter models!")
 print("💡 Key points:")
 print("   - Use 'llm_config=' parameter (not 'config=')")
-print("   - DO NOT prefix models with 'openrouter/' - LiteLLM detects it from api_base")
+print("   - Use bare provider/model ids from proctor.models (no openrouter/ prefix)")
 print("   - You can override any model configuration per technique")
-print("   - LiteLLM handles the API differences automatically")
 print("   - Different models have different strengths and pricing")

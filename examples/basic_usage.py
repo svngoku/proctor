@@ -61,7 +61,7 @@ def main():
         if API_KEY_SET:
             print("\nCalling LLM (requires OPENROUTER_API_KEY to be set)...")
             # You can override LLM config per call if needed:
-            # llm_config_override = {"model": "anthropic/claude-3-haiku"}
+            # llm_config_override = {"model": "anthropic/claude-sonnet-5"}
             # response = technique.execute(problem, llm_config=llm_config_override)
             response = technique.execute(problem)
             print("\nLLM Response:")

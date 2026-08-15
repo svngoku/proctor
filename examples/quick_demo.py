@@ -5,8 +5,9 @@ import os
 from dotenv import load_dotenv
 
 from proctor import ChainOfThought, OPENROUTER_BASE_URL
+from proctor.models import GPT_5_6_TERRA
 
-MODEL = "openai/gpt-4o-mini"
+MODEL = GPT_5_6_TERRA
 
 
 def main():

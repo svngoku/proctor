@@ -13,6 +13,9 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 # Recent general-purpose models grouped by provider (newest first).
 RECENT_MODELS: Dict[str, List[str]] = {
     "openai": [
+        "openai/gpt-5.6-sol",
+        "openai/gpt-5.6-terra",
+        "openai/gpt-5.6-luna",
         "openai/gpt-5.5-pro",
         "openai/gpt-5.5",
         "openai/gpt-5.4",
@@ -23,6 +26,7 @@ RECENT_MODELS: Dict[str, List[str]] = {
         "openai/gpt-4o-mini",
     ],
     "anthropic": [
+        "anthropic/claude-sonnet-5",
         "anthropic/claude-opus-4.8",
         "anthropic/claude-opus-4.8-fast",
         "anthropic/claude-opus-4.7",
@@ -30,6 +34,7 @@ RECENT_MODELS: Dict[str, List[str]] = {
         "anthropic/claude-opus-4.6",
     ],
     "google": [
+        "google/gemini-3.7-flash",
         "google/gemini-3.5-flash",
         "google/gemini-3.1-flash-lite",
         "google/gemini-3-pro-image",
@@ -172,13 +177,18 @@ FLOATING_ALIASES: Dict[str, str] = {
 }
 
 # Named constants for popular flagships.
-DEFAULT_MODEL = "openai/gpt-4o"
+DEFAULT_MODEL = "openai/gpt-5.6-terra"
+GPT_5_6_SOL = "openai/gpt-5.6-sol"
+GPT_5_6_TERRA = "openai/gpt-5.6-terra"
+GPT_5_6_LUNA = "openai/gpt-5.6-luna"
 GPT_5_5_PRO = "openai/gpt-5.5-pro"
 GPT_5_5 = "openai/gpt-5.5"
 GPT_5_4 = "openai/gpt-5.4"
 GPT_5_4_MINI = "openai/gpt-5.4-mini"
 CLAUDE_OPUS_4_8 = "anthropic/claude-opus-4.8"
+CLAUDE_SONNET_5 = "anthropic/claude-sonnet-5"
 CLAUDE_SONNET_4_6 = "anthropic/claude-sonnet-4.6"
+GEMINI_3_7_FLASH = "google/gemini-3.7-flash"
 GEMINI_3_5_FLASH = "google/gemini-3.5-flash"
 DEEPSEEK_V4_PRO = "deepseek/deepseek-v4-pro"
 DEEPSEEK_R1 = "deepseek/deepseek-r1-0528"

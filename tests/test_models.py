@@ -19,7 +19,9 @@ def test_list_open_source_models():
 
 
 def test_is_known_model():
-    assert is_known_model("openai/gpt-4o")
+    assert is_known_model("openai/gpt-5.6-terra")
+    assert is_known_model("google/gemini-3.7-flash")
+    assert is_known_model("anthropic/claude-sonnet-5")
     assert is_known_model("openai-latest")
     assert is_known_model(next(iter(FLOATING_ALIASES.values())))
     assert not is_known_model("not-a-real-model")
