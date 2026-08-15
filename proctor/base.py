@@ -126,7 +126,11 @@ class PromptTechnique(ABC):
         if system_prompt:
             log.info(f"System Prompt: [yellow]'{system_prompt}'[/]")
         if llm_config:
-            log.info(f"LLM Config Override: {llm_config}")
+            redacted = {
+                k: ("***" if "key" in k.lower() or "secret" in k.lower() else v)
+                for k, v in llm_config.items()
+            }
+            log.info(f"LLM Config Override: {redacted}")
         if kwargs:
             log.info(f"Additional Args: {kwargs}")
 
