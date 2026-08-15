@@ -11,7 +11,7 @@ load_dotenv()
 # Assuming the package is installed or PYTHONPATH is set correctly
 # If running directly from the repo root, you might need path adjustments
 # Or install the package using `uv pip install .` in the `proctor/` directory.
-from proctor import (
+from proctor import (  # noqa: E402
     get_technique,  # Added get_technique for demonstration
 )
 

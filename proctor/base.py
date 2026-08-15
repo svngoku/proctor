@@ -4,7 +4,7 @@ Base classes for prompt techniques.
 
 from typing import Any, Dict, Optional, List
 from abc import ABC, abstractmethod
-from .utils import call_llm, log, LLMError
+from .utils import call_llm, call_llm_async, log, LLMError
 
 
 class PromptTechnique(ABC):
@@ -93,6 +93,67 @@ class PromptTechnique(ABC):
         except Exception as e:
             log.exception(f"Unexpected error during execution: {e}")
             raise RuntimeError(f"Unexpected error during execution: {str(e)}")
+
+    async def execute_async(
+        self,
+        input_text: str,
+        system_prompt: Optional[str] = None,
+        llm_config: Optional[Dict[str, Any]] = None,
+        max_retries: int = 2,
+        **kwargs,
+    ) -> str:
+        """
+        Asynchronously execute the technique on input text and return the LLM response.
+
+        Args:
+            input_text (str): The input text
+            system_prompt (Optional[str]): Optional system prompt
+            llm_config (Optional[Dict[str, Any]]): LLM configuration overrides
+            max_retries (int): Maximum number of retry attempts for LLM calls
+            **kwargs: Additional arguments for prompt generation
+
+        Returns:
+            str: The LLM response
+
+        Raises:
+            ValueError: If input validation fails
+            LLMError: If there are persistent issues with the LLM call
+        """
+        log.info(
+            f"Executing technique asynchronously: [bold magenta]{self.name}[/] ({self.identifier})"
+        )
+        log.info(f"Input Text: [cyan]'{input_text}'[/]")
+        if system_prompt:
+            log.info(f"System Prompt: [yellow]'{system_prompt}'[/]")
+        if llm_config:
+            redacted = {
+                k: ("***" if "key" in k.lower() or "secret" in k.lower() else v)
+                for k, v in llm_config.items()
+            }
+            log.info(f"LLM Config Override: {redacted}")
+        if kwargs:
+            log.info(f"Additional Args: {kwargs}")
+
+        # Generate prompt (may raise ValueError)
+        prompt = self.generate_prompt(input_text, **kwargs)
+        log.info(f"Generated Prompt:\n[blue]--- START ---\n{prompt}\n--- END ---[/]")
+
+        try:
+            # Call LLM asynchronously with retry handling
+            response = await call_llm_async(
+                prompt, system_prompt, llm_config, max_retries
+            )
+            log.info(f"LLM Response:\n[green]--- START ---\n{response}\n--- END ---[/]")
+            return response
+
+        except LLMError as e:
+            log.error(f"[bold red]LLM Error: {str(e)}[/]")
+            # Re-raise the exception for higher-level handling
+            raise
+
+        except Exception as e:
+            log.exception(f"Unexpected error during async execution: {e}")
+            raise RuntimeError(f"Unexpected error during async execution: {str(e)}")
 
     def __str__(self) -> str:
         return f"{self.name} ({self.identifier})"

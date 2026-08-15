@@ -321,8 +321,6 @@ class SGICL(PromptTechnique):
         if focus_parts is None:
             focus_parts = ["reasoning", "key_steps"]
 
-        generation_style = kwargs.get("generation_style", "step_by_step")
-
         # Generate selective examples
         selective_examples = []
         for example in examples:
@@ -488,7 +486,6 @@ class PromptMining(PromptTechnique):
                 },
             ]
 
-        pattern_templates = kwargs.get("pattern_templates", [])
         adaptive = kwargs.get("adaptive", True)
 
         # Mine patterns based on focus area

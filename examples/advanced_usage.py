@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Assuming the package is installed or PYTHONPATH is set correctly
-from proctor import (
+from proctor import (  # noqa: E402
     list_techniques,
     get_technique,
     CompositeTechnique,

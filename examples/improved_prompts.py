@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from proctor import RolePrompting, ZeroShotCoT, DECOMP, SelfConsistency
+from proctor import RolePrompting, ZeroShotCoT, DECOMP, SelfConsistency  # noqa: E402
 
 # Check if API key is set
 API_KEY_SET = bool(os.environ.get("OPENROUTER_API_KEY"))

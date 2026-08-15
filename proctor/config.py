@@ -1,5 +1,5 @@
 """
-Configuration for LLM services using litellm with openrouter.
+Configuration for LLM services using the OpenRouter Python SDK.
 """
 
 import os
@@ -12,6 +12,7 @@ DEFAULT_LLM_CONFIG = {
     "api_key": os.environ.get("OPENROUTER_API_KEY", ""),
     "max_tokens": 1000,
     "temperature": 0.7,
+    "timeout": 120,  # Request timeout in seconds
 }
 
 

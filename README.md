@@ -20,6 +20,12 @@ The library is based on the hierarchical structure of prompting techniques outli
     *   Decomposition (e.g., `DECOMP`)
     *   Self-Criticism (e.g., `ChainOfVerification`)
     *   Ensembling (e.g., `SelfConsistency`)
+*   **DSPy Integration (v0.2.0+):** 🆕 Advanced techniques powered by [DSPy](https://github.com/stanfordnlp/dspy):
+    *   **Structured Outputs:** Type-safe results with separate reasoning/answer fields
+    *   **Automatic Optimization:** Use BootstrapFewShot to improve prompts automatically
+    *   **Real Ensembles:** Actual multi-path reasoning with consensus voting
+    *   **Better Composition:** Module-based architecture for complex pipelines
+    *   See `DSPY_OPTIMIZATION_PLAN.md` and `DSPY_MIGRATION_GUIDE.md` for details
 *   **Base Classes:** Provides `PromptTechnique` as an extensible base class for creating custom techniques.
 *   **Composability:** Allows combining multiple techniques sequentially using `CompositeTechnique`.
 *   **LLM Backend:** Uses [LiteLLM](https://github.com/BerriAI/litellm) to interact with various LLM APIs, configured for [OpenRouter](https://openrouter.ai/) by default.
@@ -182,12 +188,9 @@ Set the logging level via environment variable if needed (e.g., `LOG_LEVEL=DEBUG
 
 ## Quick Start
 
-After installation, here's a simple example to get started:
+### Classic Usage
 
 ```python
-# Install the package
-# pip install proctor-ai
-
 import os
 from dotenv import load_dotenv
 from proctor import ZeroShotCoT
@@ -203,6 +206,34 @@ problem = "What are the benefits of renewable energy?"
 response = cot.execute(problem)
 print(response)
 ```
+
+### DSPy-Powered Usage (v0.2.0+)
+
+```python
+from dotenv import load_dotenv
+from proctor.dspy_lm import configure_dspy_with_litellm
+from proctor.dspy_techniques import DSPyChainOfThought
+
+load_dotenv()
+
+# Configure DSPy
+configure_dspy_with_litellm()
+
+# Use DSPy technique with structured output
+cot = DSPyChainOfThought()
+result = cot.forward(problem="What is 15% of 200?")
+
+print("Reasoning:", result.reasoning)
+print("Answer:", result.answer)
+```
+
+**DSPy Benefits:**
+- ✅ Structured, type-safe outputs
+- ✅ Automatic prompt optimization
+- ✅ Better composition and modularity
+- ✅ Real ensemble implementations
+
+See `examples/dspy_basic_usage.py` and `DSPY_MIGRATION_GUIDE.md` for more.
 
 ## Development
 

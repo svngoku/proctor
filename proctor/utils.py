@@ -2,21 +2,23 @@
 Utility functions for prompt techniques.
 """
 
+import time
 import textwrap
 import logging
 import asyncio
-import time
-from typing import Dict, Any, Optional, Union, AsyncIterator, Iterator
-import litellm
-from litellm.exceptions import (
-    RateLimitError,
-    BadRequestError,
-    AuthenticationError,
-    ContextWindowExceededError,
-    ContentPolicyViolationError,
-    ServiceUnavailableError,
-    OpenAIError,
-    Timeout,
+from typing import Dict, Any, Optional, AsyncIterator, Iterator
+
+from openrouter import OpenRouter
+from openrouter.errors import (
+    OpenRouterError,
+    BadRequestResponseError,
+    UnauthorizedResponseError,
+    ForbiddenResponseError,
+    NotFoundResponseError,
+    PaymentRequiredResponseError,
+    UnprocessableEntityResponseError,
+    ConflictResponseError,
+    PayloadTooLargeResponseError,
 )
 from rich.logging import RichHandler
 from .config import get_llm_config
@@ -31,6 +33,18 @@ logging.basicConfig(
 
 log = logging.getLogger("rich")
 # --- End Logger Setup ---
+
+# Client (4xx) errors that should never be retried.
+NON_RETRYABLE_ERRORS = (
+    BadRequestResponseError,
+    UnauthorizedResponseError,
+    ForbiddenResponseError,
+    NotFoundResponseError,
+    PaymentRequiredResponseError,
+    UnprocessableEntityResponseError,
+    ConflictResponseError,
+    PayloadTooLargeResponseError,
+)
 
 
 def dedent_prompt(prompt: str) -> str:
@@ -52,6 +66,79 @@ class LLMError(Exception):
     pass
 
 
+def _normalize_model(model: str) -> str:
+    """Strip a leading ``openrouter/`` prefix; the SDK targets OpenRouter natively."""
+    if model.startswith("openrouter/"):
+        return model[len("openrouter/") :]
+    return model
+
+
+def _prepare_config(
+    config_override: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Merge overrides into the base config and validate the API key."""
+    config = get_llm_config()
+    if config_override:
+        config.update(config_override)
+
+    if not config.get("api_key"):
+        log.error("Missing API key in configuration")
+        raise LLMError(
+            "Missing API key. Please set OPENROUTER_API_KEY environment variable."
+        )
+    return config
+
+
+def _build_messages(prompt: str, system_prompt: Optional[str]) -> list:
+    """Build the OpenRouter chat messages list."""
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": prompt})
+    return messages
+
+
+def _openrouter_kwargs(config: Dict[str, Any]) -> Dict[str, Any]:
+    kwargs: Dict[str, Any] = {"api_key": config["api_key"]}
+    if config.get("api_base"):
+        kwargs["server_url"] = config["api_base"]
+    return kwargs
+
+
+def _send_kwargs(
+    config: Dict[str, Any], messages: list, stream: bool
+) -> Dict[str, Any]:
+    """Assemble keyword arguments for ``client.chat.send``."""
+    kwargs: Dict[str, Any] = {
+        "model": _normalize_model(config["model"]),
+        "messages": messages,
+        "max_tokens": config.get("max_tokens", 1000),
+        "temperature": config.get("temperature", 0.7),
+        "timeout_ms": int(config.get("timeout", 120) * 1000),
+    }
+    if stream:
+        kwargs["stream"] = True
+    return kwargs
+
+
+def _extract_content(response: Any) -> str:
+    """Extract the message content from a non-streaming chat response."""
+    choices = getattr(response, "choices", None)
+    if choices and choices[0].message and choices[0].message.content is not None:
+        return choices[0].message.content
+    log.error("Received unexpected response format from LLM.")
+    log.error(f"Response object: {response}")
+    raise LLMError("Unexpected response format from LLM")
+
+
+def _chunk_content(event: Any) -> Optional[str]:
+    """Extract incremental content from a streaming chat event, if present."""
+    choices = getattr(event, "choices", None)
+    if choices and getattr(choices[0], "delta", None):
+        return choices[0].delta.content
+    return None
+
+
 def call_llm(
     prompt: str,
     system_prompt: Optional[str] = None,
@@ -59,7 +146,7 @@ def call_llm(
     max_retries: int = 2,
 ) -> str:
     """
-    Call the LLM with the given prompt using litellm with openrouter.
+    Call the LLM with the given prompt using the OpenRouter SDK.
 
     Args:
         prompt (str): The user prompt to send
@@ -76,103 +163,55 @@ def call_llm(
     if not prompt or not isinstance(prompt, str):
         raise ValueError("Prompt must be a non-empty string")
 
-    config = get_llm_config()
-
-    # Apply config overrides if provided
-    if config_override:
-        config.update(config_override)
-
-    # Validate required configuration
-    if not config.get("api_key"):
-        log.error("Missing API key in configuration")
-        raise LLMError(
-            "Missing API key. Please set OPENROUTER_API_KEY environment variable."
-        )
-
-    messages = []
-
-    if system_prompt:
-        messages.append({"role": "system", "content": system_prompt})
-
-    messages.append({"role": "user", "content": prompt})
+    config = _prepare_config(config_override)
+    messages = _build_messages(prompt, system_prompt)
 
     log.info("Attempting to call LLM...")
     log.debug(f"LLM Config: {config}")
     log.debug(f"Messages: {messages}")
 
-    # Track retry attempts
     attempts = 0
     last_error = None
 
-    while attempts <= max_retries:
-        try:
-            # For OpenRouter, we need to set custom_llm_provider
-            if "openrouter.ai" in config.get("api_base", ""):
-                response = litellm.completion(
-                    model=config["model"],
-                    messages=messages,
-                    api_base=config["api_base"],
-                    api_key=config["api_key"],
-                    max_tokens=config.get("max_tokens", 1000),
-                    temperature=config.get("temperature", 0.7),
-                    custom_llm_provider="openrouter",
-                )
-            else:
-                response = litellm.completion(
-                    model=config["model"],
-                    messages=messages,
-                    api_base=config["api_base"],
-                    api_key=config["api_key"],
-                    max_tokens=config.get("max_tokens", 1000),
-                    temperature=config.get("temperature", 0.7),
-                )
-
-            log.debug(f"Raw LLM Response object: {response}")
-
-            # Process response
-            if response.choices and response.choices[0].message:
-                content = response.choices[0].message.content
+    with OpenRouter(**_openrouter_kwargs(config)) as client:
+        while attempts <= max_retries:
+            try:
+                response = client.chat.send(**_send_kwargs(config, messages, False))
+                log.debug(f"Raw LLM Response object: {response}")
+                content = _extract_content(response)
                 log.info("LLM call successful.")
                 return content
-            else:
-                log.error("Received unexpected response format from LLM.")
-                log.error(f"Response object: {response}")
-                raise LLMError("Unexpected response format from LLM")
 
-        except (
-            litellm.exceptions.RateLimitError,
-            litellm.exceptions.BadRequestError,
-            litellm.exceptions.OpenAIError,
-            litellm.exceptions.ServiceUnavailableError,
-        ) as e:
-            # These are potentially retryable errors
-            last_error = e
-            attempts += 1
+            except OpenRouterError as e:
+                if isinstance(e, NON_RETRYABLE_ERRORS):
+                    log.exception(f"Non-retryable error calling LLM: {e}")
+                    raise LLMError(f"Error calling LLM: {str(e)}")
 
-            if attempts <= max_retries:
-                retry_delay = 2**attempts  # Exponential backoff
-                log.warning(
-                    f"Retryable error: {str(e)}. Retrying in {retry_delay}s... (Attempt {attempts}/{max_retries})"
-                )
-                import time
+                last_error = e
+                attempts += 1
+                if attempts <= max_retries:
+                    retry_delay = 2**attempts
+                    log.warning(
+                        f"Retryable error: {str(e)}. Retrying in {retry_delay}s... "
+                        f"(Attempt {attempts}/{max_retries})"
+                    )
+                    time.sleep(retry_delay)
+                else:
+                    break
 
-                time.sleep(retry_delay)
-            else:
-                # Max retries exceeded
-                break
+            except LLMError:
+                raise
 
-        except Exception as e:
-            # Non-retryable error
-            log.exception(f"Non-retryable error calling LLM: {e}")
-            raise LLMError(f"Error calling LLM: {str(e)}")
+            except Exception as e:
+                log.exception(f"Non-retryable error calling LLM: {e}")
+                raise LLMError(f"Error calling LLM: {str(e)}")
 
-    # If we've exhausted retries
     if last_error:
         log.error(f"Failed after {max_retries} retries: {str(last_error)}")
         raise LLMError(f"Error after {max_retries} retries: {str(last_error)}")
 
-    # Fallback error (should not reach here)
     raise LLMError("Unknown error occurred when calling LLM")
+
 
 async def call_llm_async(
     prompt: str,
@@ -181,7 +220,7 @@ async def call_llm_async(
     max_retries: int = 2,
 ) -> str:
     """
-    Asynchronous version of call_llm using litellm.acompletion.
+    Asynchronous version of call_llm using the OpenRouter SDK.
 
     Args:
         prompt (str): The user prompt to send
@@ -198,101 +237,55 @@ async def call_llm_async(
     if not prompt or not isinstance(prompt, str):
         raise ValueError("Prompt must be a non-empty string")
 
-    config = get_llm_config()
-
-    # Apply config overrides if provided
-    if config_override:
-        config.update(config_override)
-
-    # Validate required configuration
-    if not config.get("api_key"):
-        log.error("Missing API key in configuration")
-        raise LLMError(
-            "Missing API key. Please set OPENROUTER_API_KEY environment variable."
-        )
-
-    messages = []
-
-    if system_prompt:
-        messages.append({"role": "system", "content": system_prompt})
-
-    messages.append({"role": "user", "content": prompt})
+    config = _prepare_config(config_override)
+    messages = _build_messages(prompt, system_prompt)
 
     log.info("Attempting to call LLM asynchronously...")
     log.debug(f"LLM Config: {config}")
     log.debug(f"Messages: {messages}")
 
-    # Track retry attempts
     attempts = 0
     last_error = None
 
-    while attempts <= max_retries:
-        try:
-            # For OpenRouter, we need to set custom_llm_provider
-            if "openrouter.ai" in config.get("api_base", ""):
-                response = await litellm.acompletion(
-                    model=config["model"],
-                    messages=messages,
-                    api_base=config["api_base"],
-                    api_key=config["api_key"],
-                    max_tokens=config.get("max_tokens", 1000),
-                    temperature=config.get("temperature", 0.7),
-                    custom_llm_provider="openrouter",
+    async with OpenRouter(**_openrouter_kwargs(config)) as client:
+        while attempts <= max_retries:
+            try:
+                response = await client.chat.send_async(
+                    **_send_kwargs(config, messages, False)
                 )
-            else:
-                response = await litellm.acompletion(
-                    model=config["model"],
-                    messages=messages,
-                    api_base=config["api_base"],
-                    api_key=config["api_key"],
-                    max_tokens=config.get("max_tokens", 1000),
-                    temperature=config.get("temperature", 0.7),
-                )
-
-            log.debug(f"Raw LLM Response object: {response}")
-
-            # Process response
-            if response.choices and response.choices[0].message:
-                content = response.choices[0].message.content
+                log.debug(f"Raw LLM Response object: {response}")
+                content = _extract_content(response)
                 log.info("LLM call successful.")
                 return content
-            else:
-                log.error("Received unexpected response format from LLM.")
-                log.error(f"Response object: {response}")
-                raise LLMError("Unexpected response format from LLM")
 
-        except (
-            RateLimitError,
-            BadRequestError,
-            OpenAIError,
-            ServiceUnavailableError,
-            Timeout,
-        ) as e:
-            # These are potentially retryable errors
-            last_error = e
-            attempts += 1
+            except OpenRouterError as e:
+                if isinstance(e, NON_RETRYABLE_ERRORS):
+                    log.exception(f"Non-retryable error calling LLM: {e}")
+                    raise LLMError(f"Error calling LLM: {str(e)}")
 
-            if attempts <= max_retries:
-                retry_delay = 2**attempts  # Exponential backoff
-                log.warning(
-                    f"Retryable error: {str(e)}. Retrying in {retry_delay}s... (Attempt {attempts}/{max_retries})"
-                )
-                await asyncio.sleep(retry_delay)
-            else:
-                # Max retries exceeded
-                break
+                last_error = e
+                attempts += 1
+                if attempts <= max_retries:
+                    retry_delay = 2**attempts
+                    log.warning(
+                        f"Retryable error: {str(e)}. Retrying in {retry_delay}s... "
+                        f"(Attempt {attempts}/{max_retries})"
+                    )
+                    await asyncio.sleep(retry_delay)
+                else:
+                    break
 
-        except Exception as e:
-            # Non-retryable error
-            log.exception(f"Non-retryable error calling LLM: {e}")
-            raise LLMError(f"Error calling LLM: {str(e)}")
+            except LLMError:
+                raise
 
-    # If we've exhausted retries
+            except Exception as e:
+                log.exception(f"Non-retryable error calling LLM: {e}")
+                raise LLMError(f"Error calling LLM: {str(e)}")
+
     if last_error:
         log.error(f"Failed after {max_retries} retries: {str(last_error)}")
         raise LLMError(f"Error after {max_retries} retries: {str(last_error)}")
 
-    # Fallback error (should not reach here)
     raise LLMError("Unknown error occurred when calling LLM")
 
 
@@ -302,7 +295,7 @@ def call_llm_stream(
     config_override: Optional[Dict[str, Any]] = None,
 ) -> Iterator[str]:
     """
-    Call the LLM with streaming response.
+    Call the LLM with a streaming response using the OpenRouter SDK.
 
     Args:
         prompt (str): The user prompt to send
@@ -318,58 +311,22 @@ def call_llm_stream(
     if not prompt or not isinstance(prompt, str):
         raise ValueError("Prompt must be a non-empty string")
 
-    config = get_llm_config()
-
-    # Apply config overrides if provided
-    if config_override:
-        config.update(config_override)
-
-    # Validate required configuration
-    if not config.get("api_key"):
-        log.error("Missing API key in configuration")
-        raise LLMError(
-            "Missing API key. Please set OPENROUTER_API_KEY environment variable."
-        )
-
-    messages = []
-
-    if system_prompt:
-        messages.append({"role": "system", "content": system_prompt})
-
-    messages.append({"role": "user", "content": prompt})
+    config = _prepare_config(config_override)
+    messages = _build_messages(prompt, system_prompt)
 
     log.info("Attempting to call LLM with streaming...")
     log.debug(f"LLM Config: {config}")
     log.debug(f"Messages: {messages}")
 
     try:
-        # For OpenRouter, we need to set custom_llm_provider
-        if "openrouter.ai" in config.get("api_base", ""):
-            response = litellm.completion(
-                model=config["model"],
-                messages=messages,
-                api_base=config["api_base"],
-                api_key=config["api_key"],
-                max_tokens=config.get("max_tokens", 1000),
-                temperature=config.get("temperature", 0.7),
-                stream=True,
-                custom_llm_provider="openrouter",
-            )
-        else:
-            response = litellm.completion(
-                model=config["model"],
-                messages=messages,
-                api_base=config["api_base"],
-                api_key=config["api_key"],
-                max_tokens=config.get("max_tokens", 1000),
-                temperature=config.get("temperature", 0.7),
-                stream=True,
-            )
-
-        for chunk in response:
-            if chunk.choices and chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
-
+        with OpenRouter(**_openrouter_kwargs(config)) as client:
+            stream = client.chat.send(**_send_kwargs(config, messages, True))
+            for event in stream:
+                content = _chunk_content(event)
+                if content:
+                    yield content
+    except LLMError:
+        raise
     except Exception as e:
         log.exception(f"Error during streaming LLM call: {e}")
         raise LLMError(f"Error during streaming: {str(e)}")
@@ -381,7 +338,7 @@ async def call_llm_async_stream(
     config_override: Optional[Dict[str, Any]] = None,
 ) -> AsyncIterator[str]:
     """
-    Asynchronously call the LLM with streaming response.
+    Asynchronously call the LLM with a streaming response using the OpenRouter SDK.
 
     Args:
         prompt (str): The user prompt to send
@@ -397,58 +354,24 @@ async def call_llm_async_stream(
     if not prompt or not isinstance(prompt, str):
         raise ValueError("Prompt must be a non-empty string")
 
-    config = get_llm_config()
-
-    # Apply config overrides if provided
-    if config_override:
-        config.update(config_override)
-
-    # Validate required configuration
-    if not config.get("api_key"):
-        log.error("Missing API key in configuration")
-        raise LLMError(
-            "Missing API key. Please set OPENROUTER_API_KEY environment variable."
-        )
-
-    messages = []
-
-    if system_prompt:
-        messages.append({"role": "system", "content": system_prompt})
-
-    messages.append({"role": "user", "content": prompt})
+    config = _prepare_config(config_override)
+    messages = _build_messages(prompt, system_prompt)
 
     log.info("Attempting to call LLM asynchronously with streaming...")
     log.debug(f"LLM Config: {config}")
     log.debug(f"Messages: {messages}")
 
     try:
-        # For OpenRouter, we need to set custom_llm_provider
-        if "openrouter.ai" in config.get("api_base", ""):
-            response = await litellm.acompletion(
-                model=config["model"],
-                messages=messages,
-                api_base=config["api_base"],
-                api_key=config["api_key"],
-                max_tokens=config.get("max_tokens", 1000),
-                temperature=config.get("temperature", 0.7),
-                stream=True,
-                custom_llm_provider="openrouter",
+        async with OpenRouter(**_openrouter_kwargs(config)) as client:
+            stream = await client.chat.send_async(
+                **_send_kwargs(config, messages, True)
             )
-        else:
-            response = await litellm.acompletion(
-                model=config["model"],
-                messages=messages,
-                api_base=config["api_base"],
-                api_key=config["api_key"],
-                max_tokens=config.get("max_tokens", 1000),
-                temperature=config.get("temperature", 0.7),
-                stream=True,
-            )
-
-        async for chunk in response:
-            if chunk.choices and chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
-
+            async for event in stream:
+                content = _chunk_content(event)
+                if content:
+                    yield content
+    except LLMError:
+        raise
     except Exception as e:
         log.exception(f"Error during async streaming LLM call: {e}")
         raise LLMError(f"Error during async streaming: {str(e)}")

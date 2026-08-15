@@ -1,5 +1,12 @@
 """
 Proctor: A Python package for text-based prompting techniques.
+
+Version 0.2.0+ includes DSPy integration for:
+- Structured outputs with type safety
+- Automatic prompt optimization
+- Better composition and modularity
+
+See DSPY_OPTIMIZATION_PLAN.md and DSPY_MIGRATION_GUIDE.md for details.
 """
 
 from typing import List, Optional, Dict, Type  # Added Type
@@ -86,8 +93,31 @@ from .decomposition.techniques import (
     TreeOfThought,
 )
 
+# Import Optimization techniques
+from .optimize import (
+    PromptOptimizer,
+    APEOptimizer,
+    ProTeGiOptimizer,
+    RLPromptOptimizer,
+    OPTIMIZERS,
+)
+
+# Import OpenRouter model registry
+from .models import (
+    OPENROUTER_BASE_URL,
+    RECENT_MODELS,
+    OPEN_SOURCE_MODELS,
+    CODING_MODELS,
+    FREE_MODELS,
+    FLOATING_ALIASES,
+    ALL_OPENROUTER_MODELS,
+    list_models,
+    list_open_source_models,
+    is_known_model,
+)
+
 # Version
-__version__ = "1.0.0"
+__version__ = "0.2.0"
 
 # Dictionary of all techniques for easy access (using class types)
 ALL_TECHNIQUES: Dict[str, Type[PromptTechnique]] = {
@@ -271,6 +301,23 @@ __all__ = [
     "RecursionOfThought",
     "SkeletonOfThought",
     "TreeOfThought",
+    # Optimization classes
+    "PromptOptimizer",
+    "APEOptimizer",
+    "ProTeGiOptimizer",
+    "RLPromptOptimizer",
+    "OPTIMIZERS",
+    # OpenRouter model registry
+    "OPENROUTER_BASE_URL",
+    "RECENT_MODELS",
+    "OPEN_SOURCE_MODELS",
+    "CODING_MODELS",
+    "FREE_MODELS",
+    "FLOATING_ALIASES",
+    "ALL_OPENROUTER_MODELS",
+    "list_models",
+    "list_open_source_models",
+    "is_known_model",
     # Utility functions and constants
     "list_techniques",
     "get_technique",
@@ -279,3 +326,18 @@ __all__ = [
     # Exceptions
     "LLMError",
 ]
+
+# ============================================================================
+# DSPy Integration (v0.2.0+)
+# ============================================================================
+# DSPy-powered techniques are available in separate modules:
+#
+# from proctor.dspy_lm import configure_dspy_with_litellm
+# from proctor.dspy_techniques import (
+#     DSPyChainOfThought,
+#     DSPyZeroShotCoT,
+#     DSPySelfConsistency,
+# )
+#
+# See DSPY_MIGRATION_GUIDE.md for usage examples and migration path.
+# ============================================================================
